@@ -1,4 +1,6 @@
 package src;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -17,7 +19,6 @@ public class Pi
     public static void main(String[] args) throws Exception 
     {
 	long total=0;
-	// 10 workers, 50000 iterations each
 	total = new Master().doRun(50000, 10);
 	System.out.println("total from Master = " + total);
     }
@@ -28,7 +29,8 @@ public class Pi
  * and aggregates the results.
  */
 class Master {
-    public long doRun(int totalCount, int numWorkers) throws InterruptedException, ExecutionException 
+	private final String csvFile = "execution_history_PI_Script.csv";
+    public long doRun(int totalCount, int numWorkers) throws InterruptedException, ExecutionException, IOException
     {
 
 	long startTime = System.currentTimeMillis();
@@ -46,27 +48,41 @@ class Master {
 	long total = 0;
     
 	// Assemble the results.
-	for (Future<Long> f : results)
-	    {
-		// Call to get() is an implicit barrier.  This will block
+	for (Future<Long> f : results) {
+		// Call to get() is an implicit barrier. This will block
 		// until result from corresponding worker is ready.
 		total += f.get();
-	    }
+	}
 	double pi = 4.0 * total / totalCount / numWorkers;
 
 	long stopTime = System.currentTimeMillis();
+	long duration = stopTime - startTime;
 
-	System.out.println("\nPi : " + pi );
-	System.out.println("Error: " + (Math.abs((pi - Math.PI)) / Math.PI) +"\n");
+	double error = Math.abs((pi - Math.PI)) / Math.PI;
 
-	System.out.println("Ntot: " + totalCount*numWorkers);
+	// Affichage des résultats
+	System.out.println("\nPi : " + pi);
+	System.out.println("Error: " + error + "\n");
+	System.out.println("Ntot: " + totalCount * numWorkers);
 	System.out.println("Available processors: " + numWorkers);
-	System.out.println("Time Duration (ms): " + (stopTime - startTime) + "\n");
+	System.out.println("Time Duration (ms): " + duration + "\n");
 
-	System.out.println( (Math.abs((pi - Math.PI)) / Math.PI) +" "+ totalCount*numWorkers +" "+ numWorkers +" "+ (stopTime - startTime));
+	// Write to CSV
+	writeToCSV(totalCount * numWorkers, numWorkers, duration, pi, error);
 
 	exec.shutdown();
 	return total;
+    }
+	private void writeToCSV(int totalIterations, int numWorkers, long duration, double pi, double error)
+            throws IOException {
+        try (FileWriter writer = new FileWriter(csvFile, true)) {
+            // Write header if file is empty
+            if (new java.io.File(csvFile).length() == 0) {
+                writer.write("TotalIterations,NumWorkers,DurationMs,CalculatedPi,Error\n");
+            }
+            // Write execution data
+            writer.write(totalIterations + "," + numWorkers + "," + duration + "," + pi + "," + error + "\n");
+        }
     }
 }
 
