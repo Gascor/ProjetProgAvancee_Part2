@@ -1,0 +1,29 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "java",
+            "name": "Current File",
+            "request": "launch",
+            "mainClass": "${file}"
+        },
+        {
+            "type": "java",
+            "name": "src.Assignment102",
+            "request": "launch",
+            "mainClass": "src.Assignment102",
+            "projectName": "ProjetProgAvancee_Part2_642f5c3c",
+            "vmArgs": "-Xmx12G"
+        },
+        {
+            "type": "java",
+            "name": "Pi",
+            "request": "launch",
+            "mainClass": "src.Pi",
+            "projectName": "ProjetProgAvancee_Part2_642f5c3c"
+        }
+    ]
+}

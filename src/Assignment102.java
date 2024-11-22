@@ -22,7 +22,7 @@ class PiMonteCarlo {
 		this.value = 0;
 	}
 	public double getPi() {
-		int nProcessors = Runtime.getRuntime().availableProcessors();
+		int nProcessors = 1;//Runtime.getRuntime().availableProcessors();
 		ExecutorService executor = Executors.newWorkStealingPool(nProcessors);
 		for (int i = 1; i <= nThrows; i++) {
 			Runnable worker = new MonteCarlo();
@@ -37,13 +37,15 @@ class PiMonteCarlo {
 }
 public class Assignment102 {
 	public static void main(String[] args) {
-		PiMonteCarlo PiVal = new PiMonteCarlo(100000);
+		int ntot = 10000000;
+		PiMonteCarlo PiVal = new PiMonteCarlo(ntot);
 		long startTime = System.currentTimeMillis();
 		double value = PiVal.getPi();
 		long stopTime = System.currentTimeMillis();
 		System.out.println("Approx value:" + value);
 		System.out.println("Difference to exact value of pi: " + (value - Math.PI));
-		System.out.println("Error: " + (value - Math.PI) / Math.PI * 100 + " %");
+		System.out.println("Error: " + Math.abs((value - Math.PI) / Math.PI * 100) + " %");
+		System.out.println("Ntot: " + ntot);
 		System.out.println("Available processors: " + Runtime.getRuntime().availableProcessors());
 		System.out.println("Time Duration: " + (stopTime - startTime) + "ms");
 	}
