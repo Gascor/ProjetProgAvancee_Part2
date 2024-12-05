@@ -6,6 +6,27 @@
     "configurations": [
         {
             "type": "java",
+            "name": "WorkerSocket_old",
+            "request": "launch",
+            "mainClass": "src.WorkerSocket_old",
+            "projectName": "ProjetProgAvancee_Part2_642f5c3c"
+        },
+        {
+            "type": "java",
+            "name": "WorkerSocket",
+            "request": "launch",
+            "mainClass": "src.JavaSocket.WorkerSocket",
+            "projectName": "ProjetProgAvancee_Part2_642f5c3c"
+        },
+        {
+            "type": "java",
+            "name": "MasterSocket",
+            "request": "launch",
+            "mainClass": "src.JavaSocket.MasterSocket",
+            "projectName": "ProjetProgAvancee_Part2_642f5c3c"
+        },
+        {
+            "type": "java",
             "name": "Current File",
             "request": "launch",
             "mainClass": "${file}"
@@ -23,6 +44,34 @@
             "name": "Pi",
             "request": "launch",
             "mainClass": "src.Pi",
+            "projectName": "ProjetProgAvancee_Part2_642f5c3c"
+        },
+        {
+            "type": "java",
+            "name": "PiMonteCarlo",
+            "request": "launch",
+            "mainClass": "src.PiMonteCarlo",
+            "projectName": "ProjetProgAvancee_Part2_642f5c3c"
+        },
+        {
+            "type": "java",
+            "name": "CsvWriter",
+            "request": "launch",
+            "mainClass": "src.CsvWriter",
+            "projectName": "ProjetProgAvancee_Part2_642f5c3c"
+        },
+        {
+            "type": "java",
+            "name": "Master",
+            "request": "launch",
+            "mainClass": "src.Master",
+            "projectName": "ProjetProgAvancee_Part2_642f5c3c"
+        },
+        {
+            "type": "java",
+            "name": "Worker",
+            "request": "launch",
+            "mainClass": "src.Worker",
             "projectName": "ProjetProgAvancee_Part2_642f5c3c"
         }
     ]

@@ -1,2 +1,0 @@
-TotalIterations,NumWorkers,DurationMs,CalculatedPi,Error
-500000,10,44,3.140096,4.763996338235384E-4

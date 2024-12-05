@@ -1,52 +1,36 @@
-// Estimate the value of Pi using Monte-Carlo Method, using parallel program
 package src;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.atomic.AtomicInteger;
-class PiMonteCarlo {
-	AtomicInteger nAtomSuccess;
-	int nThrows;
-	double value;
-	class MonteCarlo implements Runnable {
-		@Override
-		public void run() {
-			double x = Math.random();
-			double y = Math.random();
-			if (x * x + y * y <= 1)
-				nAtomSuccess.incrementAndGet();
-		}
-	}
-	public PiMonteCarlo(int i) {
-		this.nAtomSuccess = new AtomicInteger(0);
-		this.nThrows = i;
-		this.value = 0;
-	}
-	public double getPi() {
-		int nProcessors = 1;//Runtime.getRuntime().availableProcessors();
-		ExecutorService executor = Executors.newWorkStealingPool(nProcessors);
-		for (int i = 1; i <= nThrows; i++) {
-			Runnable worker = new MonteCarlo();
-			executor.execute(worker);
-		}
-		executor.shutdown();
-		while (!executor.isTerminated()) {
-		}
-		value = 4.0 * nAtomSuccess.get() / nThrows;
-		return value;
-	}
-}
+
 public class Assignment102 {
-	public static void main(String[] args) {
-		int ntot = 10000000;
-		PiMonteCarlo PiVal = new PiMonteCarlo(ntot);
-		long startTime = System.currentTimeMillis();
-		double value = PiVal.getPi();
-		long stopTime = System.currentTimeMillis();
-		System.out.println("Approx value:" + value);
-		System.out.println("Difference to exact value of pi: " + (value - Math.PI));
-		System.out.println("Error: " + Math.abs((value - Math.PI) / Math.PI * 100) + " %");
-		System.out.println("Ntot: " + ntot);
-		System.out.println("Available processors: " + Runtime.getRuntime().availableProcessors());
-		System.out.println("Time Duration: " + (stopTime - startTime) + "ms");
-	}
+    public static void main(String[] args) {
+        // Vérifier que les arguments sont fournis
+        if (args.length < 3) {
+            System.out.println("Usage: java Assignment102 <total_points> <num_threads> <output_csv>");
+            return;
+        }
+
+        // Récupérer les arguments
+        int i = Integer.parseInt(args[0]);  // Total de points par travailleur
+        int nprocesseurs = Integer.parseInt(args[1]);  // Nombre de threads (processeurs)
+        String outputCsv = args[2];  // Nom du fichier CSV de sortie
+
+        // Créer une instance de PiMonteCarlo avec les paramètres
+        PiMonteCarlo PiVal = new PiMonteCarlo(i, nprocesseurs);
+
+        // Démarrer le chronomètre
+        long startTime = System.currentTimeMillis();
+        double value = PiVal.getPi();
+        long stopTime = System.currentTimeMillis();
+
+        // Afficher les résultats dans la console
+        System.out.println("\nPi: " + value);
+        System.out.println("Difference to exact value of pi: " + (value - Math.PI));
+        System.out.println("Error: " + (Math.abs((value - Math.PI)) / Math.PI) + "\n");
+        System.out.println("Ntot: " + i);
+        System.out.println("Available processors: " + Runtime.getRuntime().availableProcessors());
+        System.out.println("Time Duration (ms): " + (stopTime - startTime));
+
+        // Créer un objet CsvWriter et enregistrer les résultats dans le fichier CSV
+        CsvWriter writer = new CsvWriter(outputCsv);
+        writer.saveResults(value, value - Math.PI, (Math.abs((value - Math.PI)) / Math.PI), i, nprocesseurs, (stopTime - startTime));
+    }
 }
