@@ -18,7 +18,7 @@ public class CsvWriter {
         try (FileWriter fw = new FileWriter(file, true); BufferedWriter bw = new BufferedWriter(fw); PrintWriter writer = new PrintWriter(bw)) {
             if (isNewFile) {
                 // Write header if file is new
-                writer.println("PI,Difference,Error,Ntot,AvailableProcessors,TimeDuration(ms)");
+                writer.println("PI;Difference;Error;Ntot;AvailableProcessors;TimeDuration(ms)");
             }
             // Add results to file
             writer.printf("%f;%f;%f;%d;%d;%d;%n", pi, difference, error, ntot, processors, timeDuration);

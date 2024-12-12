@@ -9,12 +9,15 @@ public class Assignment102 {
         }
 
         // Récupérer les arguments
-        int i = Integer.parseInt(args[0]);  // Total de points par travailleur
-        int nprocesseurs = Integer.parseInt(args[1]);  // Nombre de threads (processeurs)
+        int pointsPerWorker = Integer.parseInt(args[0]);  // Total de points par travailleur
+        int numThreads = Integer.parseInt(args[1]);  // Nombre de threads (processeurs)
         String outputCsv = args[2];  // Nom du fichier CSV de sortie
 
+        // Calculer Ntot correctement
+        int totalPoints = pointsPerWorker * numThreads;
+
         // Créer une instance de PiMonteCarlo avec les paramètres
-        PiMonteCarlo PiVal = new PiMonteCarlo(i, nprocesseurs);
+        PiMonteCarlo PiVal = new PiMonteCarlo(pointsPerWorker, numThreads);
 
         // Démarrer le chronomètre
         long startTime = System.currentTimeMillis();
@@ -25,12 +28,12 @@ public class Assignment102 {
         System.out.println("\nPi: " + value);
         System.out.println("Difference to exact value of pi: " + (value - Math.PI));
         System.out.println("Error: " + (Math.abs((value - Math.PI)) / Math.PI) + "\n");
-        System.out.println("Ntot: " + i);
-        System.out.println("Available processors: " + Runtime.getRuntime().availableProcessors());
+        System.out.println("Ntot: " + totalPoints);  // Afficher Ntot correct
+        System.out.println("Available processors: " + numThreads);
         System.out.println("Time Duration (ms): " + (stopTime - startTime));
 
         // Créer un objet CsvWriter et enregistrer les résultats dans le fichier CSV
         CsvWriter writer = new CsvWriter(outputCsv);
-        writer.saveResults(value, value - Math.PI, (Math.abs((value - Math.PI)) / Math.PI), i, nprocesseurs, (stopTime - startTime));
+        writer.saveResults(value, value - Math.PI, (Math.abs((value - Math.PI)) / Math.PI), totalPoints, numThreads, (stopTime - startTime)*numThreads);
     }
 }

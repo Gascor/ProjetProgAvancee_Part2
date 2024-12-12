@@ -1,0 +1,6 @@
+Erreur standard pour java -cp bin src.Assignment102 1600000 1 temp_results_1_0_20241205202923948072.csv:
+
+Erreur standard pour java -cp bin src.Assignment102 1600000 1 temp_results_1_1_20241205202925384166.csv:
+
+Erreur standard pour java -cp bin src.Assignment102 1600000 1 temp_results_1_2_20241205202926861918.csv:
+

@@ -5,210 +5,252 @@
 
 **Auteur :** `Lucas DA SILVA FERREIRA`  
 **Classe :** `INFO3 - FI`  
-**Date :** `25 Octobre 2024`  
-**Heure de finalisation :** `13:20`
+**Date :** `11 Décembre 2024`
 
-# Compte Rendu - Développement Avancé
+Note Importante : Ce rapport à été reformulé plus clairement à l'aide de ChatGPT et à été **<u>relu minutieusement</u>** en connaissance de cause d'une bonne transmission et d'une bonne expression de ce que j'ai appris lors de ce cours et de prévenir tout phénomène d'hallucination éventuel de la part de ce modèle.
+
+# **Compte Rendu 2  - Développement Avancé**
+
+<br>
 
 ## Sommaire
 
-- [1. Introduction](#introduction)
-- [2. XXX](#xxx)
-  - [2.1. XXX](#xxx)
-- [3. TP 1 - Conception et Threads](#tp-1)
-  - [3.1. Diagramme de Classe](#diagramme-de-classe)
-  - [3.2. Les Classes et leurs Rôles](#les-classes-et-leurs-rôles)
-  - [3.3. Cycle de Vie des Threads](#cycle-de-vie-des-threads)
-- [4. TP 2 - Problèmes de Synchronisation](#tp-2)
-  - [4.1. Diagramme de Classe](#tp2-diagramme-de-classe)
-  - [4.2. Accès Concurrent](#accès-concurrent)
-  - [4.3. Exclusion Mutuelle et Problèmes d'Affichage](#exclusion-mutuelle-et-problèmes-daffichage)
-- [5. TP 3 - Producteur-Consommateur](#tp-3)
-  - [5.1. Diagramme de Classe](#tp3-diagramme-de-classe)
-  - [5.2. Explication du Problème](#explication-du-problème)
-- [6. TP 3bis - Producteur-Consommateur](#tp3bis)
-  - [6.1. Diagramme de Classe](#tp3bis-diagramme-de-classe)
-  - [6.2. Contexte du TP](#contexte3bis)
-  - [6.3. Modele et BlockingQueue](#modele3bis)
-- [7. Conclusion](#conclusion)
+- [0. Introduction](#introduction)
+- [0bis. Architecture matérielle](#architecture-materielle)
+- [1. Méthode MC](#methode-mc)
+- [2. Algorithmes et Paradigmes employés](#algo-et-paradigme)
+  - [2.1. Iteration](#iteration)
+  - [2.2. MasterWorker](#masterworker)
+- [3. Mise en oeuvre sur Machine Partagé](#mise-en-oeuvre-sur-machine-partage)
+  - [3.1. Analyse Assignment 102](#analyse-assignment-102)
+  - [3.2. Analyse Pi.java](#analyse-pijava)
+- [4. Qualité de test de perf](#qualite-de-test-de-perf)
+- [5. Mise en oeuvre en mémoire distribuée](#mise-en-oeuvre-en-memoire-distribuee)
+  - [5.1. Java Socket MW](#java-socket-mw)
+- [6. Perf MW](#perf-mw)
+- [7. Parallélisation sur plusieurs machines](#parallelisation-sur-plusieurs-machines)
+- [9. Conclusion](#conclusion)
 
 ---
 
-## <a id="introduction"/>1. Introduction 
+<br>
 
-Dans le cadre du cours de **Programmation Avancée**, plusieurs travaux pratiques (TP) ont été réalisés pour approfondir la compréhension des concepts comme les **threads**, la **synchronisation** et la **programmation concurrente** en Java. Ce rapport couvre trois TP principaux : la conception et l'utilisation des threads, les problèmes d'accès concurrent, ainsi que la mise en place d'un modèle **Producteur-Consommateur**.
+## 0. Introduction <a id="introduction"></a>
 
-## <a id="architecture-matérielle"/>2. Architecture Matérielle
+Ce rapport présente une exploration approfondie des techniques de calcul parallélisé pour résoudre le problème de l'approximation de la valeur de π à l'aide de la méthode Monte Carlo. Cette méthode statistique repose sur l'utilisation de points aléatoires pour évaluer la surface d'un cercle inscrit dans un carré.
 
-### <a id="comparaison-des-configurations-matérielles"/>Comparaison des Configurations Matérielles
+Afin d'optimiser ce calcul, plusieurs paradigmes et approches ont été implémentés, incluant l'utilisation de multithreading, la distribution de calculs sur plusieurs machines, et l'exploitation de sockets pour coordonner les travailleurs distants. Les codes sources étudiés, tels que Pi.java, MasterSocket.java, Assignment102.java, et CsvWriter.java, illustrent ces différents aspects du développement avancé.
+
+Nous avons structuré ce rapport pour suivre une progression logique : nous commencerons par décrire la méthode Monte Carlo (section 1) et les algorithmes employés (section 2). Nous examinerons ensuite la mise en œuvre de ces algorithmes sur des machines partagées, ainsi que leur adaptation pour des environnements distribués (sections 3 et 5). Enfin, nous évaluerons les performances obtenues grâce aux tests et à la parallélisation sur plusieurs machines (sections 4, 6 et 7).
+
+Chaque section met en lumière un aspect technique clé, depuis les principes algorithmiques jusqu'à l’analyse des performances. Les résultats, sauvegardés sous forme de fichiers CSV, offrent une traçabilité pour valider l’efficacité des solutions développées. Ce travail s'inscrit dans une démarche pédagogique visant à maîtriser les concepts avancés de développement logiciel, tout en explorant leur mise en œuvre concrète sur des architectures modernes.
+
+<br>
+
+## 0bis. Architecture Matérielle <a id="architecture-materielle"></a> 
 
 |            | G25                                                         | I21                                                         | G24                                                         | OnePlus 9                                                   |
 |------------|--------------------------------------------------------------|--------------------------------------------------------------|--------------------------------------------------------------|--------------------------------------------------------------|
-| **CPU**    | i7 4790, 4c/8t, 3.6GHz, 4.0GHz Turbo, 64-bit                 | i7 4790, 4c/8t, 3.6GHz, 4.0GHz Turbo, 64-bit                 | i7-12700T, 12c/20t (8p-core, 4e-core), 1.4GHz - 4.7GHz Turbo, 64-bit | Qualcomm SM8350 Snapdragon 888 5G (5 nm), Octa-core (1x2.84 GHz Cortex-X1 & 3x2.42 GHz Cortex-A78 & 4x1.80 GHz Cortex-A55) |
-| **RAM**    | 8Go RAM Micron MT16KTF1G64AZ-1G6E1 DDR3 PC3L-12800U 2Rx8 1600MHz 1.35v CL11 | 2x8Go RAM Micron MT16KTF1G64AZ-1G6E1 DDR3 PC3L-12800U 2Rx8 1600MHz 1.35v CL11 | 2x32Go RAM Micron MTC16G2085S1SC-48BA1 SODIMM-DDR5 PC5-38400 2Rx8 4800MHz 1.1v CL40 | 12Go RAM LPDDR5-6400 Bus mémoire 64 bits Bande passante de la mémoire 51,2 GB/s |
-| **GPU**    | eGPU Intel, Intel® HD Graphics 4600, Mémoire vidéo maxi du sous-ensemble graphique 2Go RAM for VRAM | eGPU Intel, Intel® HD Graphics 4600, Mémoire vidéo maxi du sous-ensemble graphique 2Go RAM for VRAM | eGPU Intel, Intel® HD Graphics 770, 32 cores, 300MHz - 1.5GHz Turbo | Adreno 660, 5nm, 792 MHz, 905 MHz Max |
+| **CPU**    | i7 4790, 4c/8t, 3.6GHz, 4.0GHz Turbo, 64-bit                 | i7 4790, 4c/8t, 3.6GHz, 4.0GHz Turbo, 64-bit                 | i7-12700T, 12c/20t (8p-core, 4e-core), 1.4GHz - 4.7GHz Turbo, 64-bit | i9-14900HX, 24c/32t (8p-core, 16e-core), 2.2Hz - 5.8GHz Turbo, 64-bit |
+| **RAM**    | 8Go RAM Micron MT16KTF1G64AZ-1G6E1 DDR3 PC3L-12800U 2Rx8 1600MHz 1.35v CL11 | 2x8Go RAM Micron MT16KTF1G64AZ-1G6E1 DDR3 PC3L-12800U 2Rx8 1600MHz 1.35v CL11 | 2x32Go RAM Micron MTC16G2085S1SC-48BA1 SODIMM-DDR5 PC5-38400 2Rx8 4800MHz 1.1v CL40 |  |
+| **GPU**    | eGPU Intel, Intel® HD Graphics 4600, Mémoire vidéo maxi du sous-ensemble graphique 2Go RAM for VRAM | eGPU Intel, Intel® HD Graphics 4600, Mémoire vidéo maxi du sous-ensemble graphique 2Go RAM for VRAM | eGPU Intel, Intel® HD Graphics 770, 32 cores, 300MHz - 1.5GHz Turbo | NVIDIA RTX 4090, 10492 cuda core, 700Mhz - 2.3Ghz Turbo, 16 Go VRAM 8Ghz |
 | **Disque** | LITEONIT LCS-256L9S-11 256Go, 2.5", 7mm SATA 6Gb/s           | LITEONIT LCS-256L9S-11 256Go, 2.5", 7mm SATA 6Gb/s           | SOLIDIGM SSDPFKNU512GZ 512Go M.2 NVMe PCIe                   | 256Go UFS 3.0                                               |
 | **Type de disque** | SSD                                                  | SSD                                                          | SSD                                                          | SSD                                                          |
 | **Fichier de pagination** | Oui                                           | Oui                                                          | Oui                                                          | Non                                                          |
 | **Fichier d’échange** | Oui                                               | Oui                                                          | Oui                                                          | Non                                                          |
 
-Ces configurations matérielles ont été utilisées pour tester les différents TP (sauf sur smartphone). Il est important de noter que les performances des threads peuvent varier en fonction de la capacité de traitement parallèle de chaque machine, ce qui influence la rapidité et la fluidité de l'exécution des programmes.
-
-On peut également souligner les différents moyens d'obtenir des informations détaillées sur le matériel des machines. Parmi les outils les plus courants, on trouve :
+TODO (ECRIRE UN PARAGRAPHE DU MATERIEL EMPLOYEE POUR LE TP)
 
 - **Msconfig** : un utilitaire Windows qui permet de visualiser et configurer le démarrage et certains aspects de la configuration matérielle.
 - **Gestionnaire de tâches** : utile pour vérifier l'utilisation des ressources en temps réel, notamment l'usage du processeur, de la mémoire et du disque.
 - **Commandes CMD** : Windows offre plusieurs commandes en ligne permettant d'obtenir des informations spécifiques sur le matériel. Par exemple, la commande `wmic memorychip get serialnumber` permet de récupérer le numéro de série de la mémoire vive (RAM), offrant ainsi plus de détails sur sa configuration.
 
+<br>
+
+## 1. Méthode MC <a id="methode-mc"></a>
+
+La méthode Monte Carlo est une technique probabiliste permettant d'estimer la valeur de π. Elle repose sur des simulations aléatoires de points dans un carré de côté $( r = 1 )$, et sur l'observation de la proportion de ces points qui tombent dans un quart de disque inscrit.
+
+### Principe mathématique :
+
+1. **Aire d'un quart de disque** :  
+   Pour un cercle de rayon $( r = 1 )$, l'aire d'un quart de disque est donnée par :  
+   $$
+   A_{\text{quart}} = \frac{\pi \cdot r^2}{4} = \frac{\pi}{4}
+   $$
+
+2. **Aire du carré** :  
+   Pour un carré de côté $( r = 1 )$, l'aire est :  
+   $$
+   A_{\text{carré}} = r^2 = 1
+   $$
+
+3. **Probabilité d'un point dans le quart de disque** :  
+   La probabilité qu'un point $( X_p(x_p, y_p) )$ tiré uniformément dans $( ]0, 1[ \times ]0, 1[ )$ appartienne au quart de disque est :  
+   $$
+   P = \frac{A_{\text{quart}}}{A_{\text{carré}}} = \frac{\pi}{4}
+   $$
+
+4. **Estimation de π par simulation** :  
+   En effectuant $( n_{\text{tot}} )$ tirages aléatoires, et en comptant $( n_{\text{cible}} )$, le nombre de points qui tombent dans le quart de disque $( x_p^2 + y_p^2 \leq 1 )$, la proportion $( P )$ peut être estimée par :  
+   $$
+   P \approx \frac{n_{\text{cible}}}{n_{\text{tot}}} \approx \frac{\pi}{4}
+   $$
+
+   D'où :  
+   $$
+   \pi \approx 4 \cdot \frac{n_{\text{cible}}}{n_{\text{tot}}}
+   $$
+
+<br>
+
+- Illustration :
+
+![Illustration de Monte Carlo](imgs/MC_Illustration.png)
+Source : <a href="https://www.cantorsparadise.org/estimating-p-using-monte-carlo-simulations-3459a84b5ef9/">Estimating π with Monte-Carlo-Simulations, Rediger par Maike Elisa, publié sur Cantors Paradise le 22 Fevrier 2020</a>
+
+<br>
+
+## 2. Algorithmes et Parallélisation <a id="algo-et-paradigme"></a>
+
+La parallélisation des calculs Monte Carlo repose sur deux paradigmes principaux : les itérations indépendantes et le modèle Master-Worker.
+
+### Dépendances entre tâches
+
+Le calcul de π à l'aide de la méthode Monte Carlo peut être décomposé en plusieurs sous-tâches organisées avec des dépendances précises :
+
+1. **Tâche principale (T0)** : Tirer et compter les points $(n_{\text{tot}})$.
+   - **Sous-tâche T0p** : Tirer un point aléatoire $(X_p(x_p, y_p))$ dans le carré.
+     - **T0p1** : Générer $(x_p)$ et $(y_p)$.
+     - **T0p2** : Vérifier si le point appartient au quart de cercle et incrémenter $(n_{\text{cible}})$.
+
+2. **Tâche secondaire (T1)** : Calculer la valeur de π après avoir terminé $(T0)$.
+
+### Organisation des dépendances
+
+- **Dépendances directes** :
+  - $(T1)$ dépend de $(T0)$ pour le calcul final.
+  - $(T0p2)$ dépend de $(T0p1)$ pour obtenir les coordonnées du point.
+
+- **Indépendance des instances** :
+  - Les instances de $(T0p1)$ sont indépendantes les unes des autres.
+  - Les instances de $(T0p2)$ sont également indépendantes entre elles.
+
+Cette organisation garantit une exécution parallèle efficace, surtout pour $(T0p1)$ et $(T0p2)$, où chaque itération peut être exécutée indépendamment.
+### Ressource critique et section critique
+
+- **Ressource critique** : Le compteur $(n_{\text{cible}})$ est une ressource partagée utilisée pour comptabiliser les points appartenant au quart de cercle.
+
+- **Section critique** : L'opération $(n_{\text{cible}} += 1)$  constitue une section critique nécessitant une synchronisation pour éviter les conflits dans un environnement multithread.
+### Conclusion
+
+Les dépendances entre les tâches sont essentielles pour structurer l'algorithme de manière efficace. Grâce à l'indépendance des instances de $(T0p1)$ et $(T0p2)$, ces sous-tâches peuvent être parallélisées complètement sans conflit. La synchronisation est toutefois nécessaire pour gérer l'accès concurrent à $(n_{\text{cible}}) $, ce qui est abordé dans la gestion de la section critique.
+
+<br>
+
+### 2.1. **Parallélisation par Itérations Indépendantes** <a id="iteration"></a>
+
+Ce paradigme consiste à tirer des points aléatoires et à vérifier leur appartenance au quart de cercle de manière simultanée. Comme souligné au dessus, chaque itération est indépendante des autres, ce qui permet une parallélisation optimale.
+
+#### Pseudo-code
+
+```plaintext
+ENTRÉES :
+n_tot : nombre total de points
+
+FONCTION GénérerPoint()
+  xp ← valeur aléatoire entre 0 et 1
+  yp ← valeur aléatoire entre 0 et 1
+  RETOURNER (xp^2 + yp^2 < 1)
+FIN FONCTION
+
+PROCÉDURE PRINCIPALE
+  compteur ← 0
+
+  // Itérations parallèles
+  POUR chaque i allant de 1 à n_tot EN PARALLÈLE
+    SI GénérerPoint() ALORS
+      INCRÉMENTER compteur
+    FIN SI
+  FIN POUR
+
+  π ← 4 × compteur / n_tot
+  AFFICHER "Estimation de π : ", π
+FIN PROCÉDURE
+```
+
+#### Explications :
+1. **Tirage aléatoire** : Chaque point $( (x_p, y_p) \ ) $ est généré de manière uniforme dans l'intervalle [0, 1].
+2. **Vérification** : La condition \$$ ( x_p^2 + y_p^2 < 1 \) détermine si le point est dans le quart de cercle.
+3. **Compteur** : Le compteur est incrémenté pour chaque point valide.
+4. **Parallélisation** : Les itérations sont effectuées indépendamment sur plusieurs threads ou cœurs du processeur.
+
+<br>
+
+### 2.2. **Modèle Master-Worker** <a id="masterworker"></a>
+
+Dans ce paradigme, le travail est réparti entre plusieurs travailleurs (**Workers**) par un gestionnaire central (**Master**). Les résultats sont collectés et combinés pour obtenir l'estimation finale de π.
+
+#### Pseudo-code
+
+```plaintext
+ENTRÉES :
+n_tot : nombre total de points
+n_workers : nombre de travailleurs
+
+FONCTION CalculPartiel(n_charge)
+  compteur_local ← 0
+  POUR chaque i allant de 1 à n_charge
+    SI GénérerPoint() ALORS
+      compteur_local ← compteur_local + 1
+    FIN SI
+  FIN POUR
+  RETOURNER compteur_local
+FIN FONCTION
+
+PROCÉDURE PRINCIPALE
+  charge_par_worker ← n_tot / n_workers
+  Liste des comptages ← Liste vide
+
+  // Distribution du travail
+  POUR chaque travailleur allant de 1 à n_workers
+    compteur_partiel ← CalculPartiel(charge_par_worker)
+    AJOUTER compteur_partiel à la Liste des comptages
+  FIN POUR
+
+  // Agrégation des résultats
+  compteur_total ← Somme des éléments dans Liste des comptages
+  π ← 4 × compteur_total / n_tot
+  AFFICHER "Estimation de π : ", π
+FIN PROCÉDURE
+```
+
+#### Explications :
+1. **Division de la charge** : Le nombre total de points \( n_{\text{tot}} \) est divisé également entre \( n_{\text{workers}} \).
+2. **Travail indépendant** : Chaque **Worker** effectue son propre calcul sur un sous-ensemble des points.
+3. **Récupération des résultats** : Le **Master** collecte les résultats partiels pour les additionner.
+4. **Calcul final** : Une fois les résultats combinés, π est calculé avec la même formule.
+
+<br>
+
+### Différences entre les deux paradigmes
+
+| Aspect                  | Itérations Indépendantes                      | Modèle Master-Worker                          |
+|-------------------------|-----------------------------------------------|-----------------------------------------------|
+| **Nature**              | Parallélisme sans coordination centrale       | Coordination centrale avec un gestionnaire    |
+| **Avantages**           | Simplicité et scalabilité directe             | Bonne gestion des ressources et modularité    |
+| **Inconvénients**       | Synchronisation complexe pour de grands \( n \) | Augmentation de la latence avec de nombreux **Workers** |
+
 ---
 
-## <a id="tp-1"/>3. TP 1
+Cette rédaction offre un pseudo-code reformulé et une explication claire tout en restant dans l'esprit de votre contenu initial.
 
-### <a id="diagramme-de-classe"/>3.1. Diagramme de Classe
-
-![Diagramme TP1](https://github.com/Gascor/TP1_Mobile_src/blob/master/docs/Conception/ConceptionV1.png)
-
-### <a id="les-classes-et-leurs-rôles"/>3.2. Les Classes et leurs Rôles
-
-#### 3.2.1. **UneFenetre**
-
-`UneFenetre` est l'interface principale qui gère l'affichage de l'application. Elle hérite de `JFrame`, une classe utilisée pour la création de fenêtres graphiques en Java.
-
-#### 3.2.2. **UnMobile**
-
-La classe `UnMobile` représente un objet mobile graphique. Son rôle est de se déplacer sur l'écran selon les paramètres définis. Il contient des méthodes pour gérer son mouvement (`run()`) et son affichage (`paintComponent()`).
-
-#### 3.2.3. **Thread et Runnable**
-
-L'utilisation de threads dans cette application permet de déplacer `UnMobile` de manière asynchrone, en parallèle avec l'interface graphique. En héritant de l'interface `Runnable`, `UnMobile` peut être exécuté dans un thread indépendant.
-
-#### 3.2.4. **TpMobile**
-
-Classe contenant la méthode `main()`, elle sert de point de départ pour lancer l'application et initialiser les composants.
-
-### <a id="cycle-de-vie-des-threads"/>3.3. Cycle de Vie des Threads
-
-Les **threads** passent par plusieurs états au cours de leur cycle de vie :  
-1. **Nouveau** : Le thread est créé mais pas encore démarré.  
-2. **Prêt** : Il est en attente de ressources pour commencer son exécution.  
-3. **En cours d'exécution** : Le thread est en train d'être exécuté par le processeur.  
-4. **Bloqué** : Il est en pause, en attente d'une ressource comme l'accès à un fichier ou à une section critique partagée.  
-5. **Terminé** : Le thread a exécuté tout son code et ne peut plus être relancé.  
-
-Le système d'exploitation gère la répartition des threads sur les cœurs du processeur et peut les déplacer d'un cœur à l'autre si nécessaire. Bien que nous puissions influencer leur synchronisation, l'allocation des ressources est contrôlée par l'OS.
 
 ---
 
-## <a id="tp-2"/>4. TP 2
+Ce contenu répond parfaitement à la section "Méthode MC" décrite dans votre plan.
 
-### <a id="tp2-diagramme-de-classe"/> 4.1. Diagramme de Classe
-
-![Diagramme TP3bis](https://github.com/Gascor/TP1_Mobile_src/blob/master/docs/Conception/Conception_Cemaphore_V1.png)
-
-### <a id="accès-concurrent"/>4.2. Accès Concurrent
-
-Dans ce TP, nous avons exploré les problèmes d'accès concurrent entre plusieurs threads, notamment lorsqu'ils tentent d'accéder à une même ressource (comme une zone mémoire ou une variable partagée). Cela peut entraîner des conflits ou des erreurs si la synchronisation n'est pas gérée correctement.
-
-### <a id="exclusion-mutuelle-et-problèmes-daffichage"/>4.3. Exclusion Mutuelle et Problèmes d'Affichage
-
-Lorsque plusieurs threads accèdent aux mêmes ressources (comme `System.out` dans TP2), ils peuvent entrer en conflit. C'est ce qu'on appelle une **condition de course**. Pour éviter cela, il est nécessaire d'utiliser des mécanismes de **synchronisation**.
-
-En Java, l'exclusion mutuelle peut être gérée par le mot-clé `synchronized` ou par des **verrous** comme les objets `Lock`. Cela permet de protéger les **sections critiques**, où l'accès concurrent pourrait entraîner des incohérences dans les données.
-
-### Exclusion Mutuelle
-
-L’**exclusion mutuelle** est un principe qui garantit qu’un seul thread peut accéder à une **section critique** à un moment donné. Cela empêche les **conditions de course** dans le cas d’accès concurrents à des ressources partagées.
-
-Les **sémaphores** et **mutex** sont des mécanismes qui permettent de réguler cet accès :
-- `wait()` force un thread à attendre qu'une ressource soit disponible.
-- `notify()` réveille un thread en attente lorsque la ressource devient libre.
-
----
-
-## <a id="tp-3"/>5. TP 3
-
-### <a id="tp3-diagramme-de-classe"/>5.1. Diagramme de Classe
-
-![Diagramme TP3](https://github.com/Gascor/TP1_Mobile_src/blob/master/docs/Conception/Conception_BAL_V1.png)
-
-### <a id="explication-du-problème"/>5.2. Explication du Problème
-
-Dans ce TP, j'ai implémenté un modèle **Producteur-Consommateur** en Java. L'idée était de simuler un producteur qui insère des lettres dans une boîte aux lettres (BAL) et un consommateur qui les retire de façon asynchrone. Les deux threads doivent fonctionner sans interférence, en utilisant une structure synchronisée pour éviter que l'un accède à la BAL pendant que l'autre l'utilise.
-
-La **BAL** agit comme un tampon entre les deux threads. Le producteur utilise la méthode `deposerLettre()` pour insérer une lettre, tandis que le consommateur utilise `retirerLettre()` pour la récupérer. La synchronisation est cruciale ici pour éviter des conflits d'accès simultané à la BAL.
-
-### <a id="53"/>5.3. Modèle Producteur-Consommateur avec Moniteur
-
-Dans le TP3, le **moniteur** est un mécanisme essentiel qui assure l'exclusion mutuelle lors de l'accès à la **Boîte Aux Lettres** (BAL) partagée par le producteur et le consommateur. Un moniteur garantit qu'un seul thread peut entrer dans une section critique (par exemple, `depose()` ou `retrait()`), empêchant ainsi les conflits entre threads.
-
-De plus, le moniteur utilise des **conditions** : si la BAL est pleine, le thread producteur attend que le consommateur libère de l'espace avant de déposer une lettre. À l'inverse, si la BAL est vide, le consommateur attend que le producteur dépose une nouvelle lettre avant de la retirer. Cela assure un fonctionnement asynchrone fluide sans erreur d'accès concurrent.
-
-## <a id="tp3bis"/> 6. TP 3bis - Boulangerie avec BlockingQueue
-
-### <a id="tp3bis-diagramme-de-classe"/> 6.1. Diagramme de Classe
-
-![Diagramme TP3bis](https://github.com/Gascor/TP1_Mobile_src/blob/master/docs/Conception/Conception_Boulanger_V1.png)
-
-### <a id="contexte3bis"/>6.2. Contexte du TP
-
-Dans ce TP, nous avons implémenté une **boulangerie** avec une file d'attente bloquante (**BlockingQueue**), qui modélise un système de production et de consommation asynchrone. Ce modèle suit le schéma classique **Producteur-Consommateur** vu précédemment, où plusieurs **boulangers** produisent des **pains** et les déposent dans une file d'attente, pendant que des **mangeurs** consomment ces pains à un rythme variable.
-
-La particularité de cette implémentation réside dans l'utilisation de l'API **Concurrent** de Java, en particulier la classe **BlockingQueue**. Cette structure simplifie la gestion de la synchronisation entre les threads producteurs et consommateurs, tout en assurant la sécurité des données partagées.
-
-### Les Classes
-
-- **Boulanger** : Producteur, il dépose des pains dans la file d'attente à intervalle régulier. Si la boulangerie est pleine (20 pains), il attend avant de pouvoir y déposer un nouveau pain.
-  
-- **Mangeur** : Consommateur, il prend des pains de la file d'attente de manière aléatoire. Si la boulangerie est vide, il attend qu'un nouveau pain soit produit. Si un **Pain Empoisonné** est consommé, il arrête son exécution.
-
-- **Boulangerie** : Représente la file d'attente de la boulangerie. Elle utilise une **ArrayBlockingQueue** de taille fixe (20), ce qui signifie qu'elle peut contenir au maximum 20 pains à la fois. Elle offre deux méthodes principales :
-  - `depose()` : Utilisée par le boulanger pour ajouter un pain à la file.
-  - `achete()` : Utilisée par le mangeur pour retirer un pain de la file.
-  
-  La boulangerie utilise des méthodes non bloquantes, comme **`offer()`** et **`poll()`**, pour gérer respectivement les ajouts et les retraits dans la file, avec des délais d'attente maximum.
-
-- **Pain** : Représente les pains créés et consommés. La classe contient un élément spécial, le **Pain Empoisonné**, utilisé pour arrêter les consommateurs "les tuer" une fois qu'il n'y a plus de pains à produire.
-
-### <a id="modele3bis"/> 6.3. Modèle Producteur-Consommateur avec BlockingQueue
-
-Le système fonctionne en continu, les boulangers produisent des pains à intervalles réguliers d'une seconde. Une fois que la boulangerie atteint sa capacité maximale (20 pains), les boulangers doivent attendre que des pains soient consommés pour en produire davantage. 
-
-Les mangeurs, de leur côté, consomment les pains de manière aléatoire (avec un délai entre 0 et 1 seconde). Si un **Pain Empoisonné** est retiré de la boulangerie, cela signale la fin du processus, et les mangeurs arrêtent de consommer.
-
-Cette simulation permet de comprendre et d'illustrer le rôle de **BlockingQueue** dans la gestion de la synchronisation des tâches concurrentes.
-
-### Points Clés de l'Implémentation
-1. **ArrayBlockingQueue** : Une file d'attente bloquante avec une taille fixe qui gère automatiquement la synchronisation entre les producteurs et les consommateurs.
-2. **Pain Empoisonné** : Utilisé pour arrêter les mangeurs et marquer la fin de la simulation.
-3. **Gestion des Délais** : Les méthodes `offer()` et `poll()` sont utilisées avec des délais pour gérer l'attente lorsque la boulangerie est pleine ou vide.
-4. **Modèle Producteur-Consommateur** : Ce modèle classique est ici simplifié par l'utilisation d'une BlockingQueue, qui assure une gestion fluide des tâches concurrentes sans besoin explicite de gestion des verrous.
-
-### Résumé du TP3bis
-
-Grâce à l'utilisation de **BlockingQueue**. La file d'attente bloquante nous a dispensé de la gestion manuelle des verrous et des conditions de course. La simulation de la boulangerie est un exemple concret de l'importance des collections dans des environnements à **haute concurrence**.
-
----
-
-### <a id="conclusion"/>7. Conclusion
-
-Jusqu'à maintenant, le cours de **Programmation Avancée** nous a permis d'explorer en profondeur la gestion des threads et des processus en Java. Les trois TP réalisés ont démontré l'importance de la **synchronisation** et de la gestion des ressources partagées. Grâce à ces travaux pratiques, j'ai acquis une solide compréhension des mécanismes sous-jacents à la programmation concurrente, et je comprends désormais mieux l'importance de l'architecture matérielle sur l'exécution des programmes multithreadés.
-
----
-
-Ce rapport présente également les concepts étudiés tout en mettant en avant différentes problématiques et des solutions mises en œuvre pour les résoudre. :)
-
----
 
 > **Liens de Navigation**
 >
 > [Retour en haut](#compte-rendu---développement-avancé)
->
-> [Voir le Diagramme de Classe du TP1](#diagramme-de-classe)
->
-> [Voir le Diagramme de Classe du TP3](#tp3-diagramme-de-classe)
->
-> [Voir le Diagramme de Classe du TP3bis](#tp3bis-diagramme-de-classe)
-> 
-> [Pour plus de détails sur le l'API Concurrent et la blocking Queue](https://blog.paumard.org/cours/java-api/chap05-concurrent-queues.html)
->
-> [Doc BlockingQueue Oracle](https://igm.univ-mlv.fr/~juge/javadoc-19/java.base/java/util/concurrent/BlockingQueue.html)

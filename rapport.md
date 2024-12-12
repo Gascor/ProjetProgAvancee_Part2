@@ -1,0 +1,472 @@
+# Rapport Prog Avancée Part 2
+
+## I. Monte Carlo pour calculer π
+
+Soit l'aire `A_quartD` d'un quart de disque de rayon 1 :
+
+```
+A_quartD = (π * r^2) / 4
+```
+
+Pour un carré de côté `r = 1`, l'aire `A_c` est :
+
+```
+A_c = r^2 = 1
+```
+
+On considère des points `X_p(x_p, y_p)` dont les coordonnées sont tirées uniformément dans l'intervalle `]0,1[`.
+
+La probabilité que `X_p` appartienne au quart de disque est :
+
+```
+P = A_quartD / A_c = π / 4
+```
+
+En effectuant `n_tot` tirages aléatoires, soit `n_cible` le nombre de points situés dans le quart de disque. Si `n_tot` est grand, on peut estimer `P` par :
+
+```
+P ≈ n_cible / n_tot ≈ π / 4
+```
+
+D'où :
+
+```
+π ≈ 4 * n_cible / n_tot
+```
+### Image : Schéma de MonteCarlo 
+![SchémaDeMonteCarlo](MonteCarlo.png)
+
+## II. Algorithme
+
+```python
+ncible = 0
+for (p = 0; n_tot > 0; n_tot--) {
+    xp = rand()  # Loi U(]0,1[)
+    yp = rand()
+    if ((xp**2 + yp**2) < 1) {
+        ncible += 1
+    }
+}
+π = 4 * ncible / n_tot
+```
+
+### Tâches
+
+1. **T0 : Tirer et compter `n_tot` points**
+    - **T0p : Tirer un point**
+        1. **T0p1 : Tirer `X_p` et `Y_P`**
+        2. **T0p2 : Incrémenter `n_cible`**
+
+2. **T1 : Calculer `π`**
+
+### Dépendances entre tâches :
+- `T1` dépend de `T0`
+- `T0p2` dépend de `T0p1`
+- Les instances de `T0p1` sont indépendantes entre elles.
+- Les instances de `T0p2` sont indépendantes entre elles.
+
+### Ressource critique et section critique :
+- **`n_cible`** est une ressource critique.
+- **Section critique** : `ncible += 1`.
+### Conclusion 
+Nous pouvons en conclure que les instances de TOp1 peuvent être entièrement parallélisées, car elles sont indépendantes les unes des autres et ne constituent pas une ressource critique.
+## 2. Algorithme et parallélisation. 
+
+###  a. Paradigme Itérations parallèles
+
+
+    ENTRÉES :
+    n_tot : nombre total de points
+    
+    FONCTION TirerPoint()
+    xp ← valeur aléatoire entre 0 et 1
+    yp ← valeur aléatoire entre 0 et 1
+    RETOURNER (xp^2 + yp^2 < 1)
+    FIN FONCTION
+    
+    PROCÉDURE PRINCIPALE
+    ncible ← 0
+    
+        PARALLEL POUR i DE 1 À n_tot
+            SI TirerPoint() ALORS
+                INCRÉMENTER ncible
+            FIN SI
+        FIN PARALLEL POUR
+    
+        π ← 4 * ncible / n_tot
+        AFFICHER "Estimation de π : ", π 
+    FIN PROCÉDURE
+
+#### Explications :
+
+Tirer un point :
+
+Tirer aléatoirement un point (xp, yp) dans un carré de 1x1 et vérifier s'il est dans un quart de cercle (xp^2 + yp^2 < 1).
+Parallélisme :
+
+Les tirages sont effectués simultanément pour accélérer le calcul.
+
+Compter les points :
+
+Incrémenter un compteur ncible pour chaque point dans le quart de cercle.
+
+Estimation de π :
+
+Calculer π avec la formule π ≈ 4 * ncible / n_tot.
+
+### b. Paradigme Master Worker
+
+
+    ENTRÉES :
+    n_tot : nombre total de points
+    n_workers : nombre de workers
+    
+    FONCTION TirerPoint()
+    xp ← valeur aléatoire entre 0 et 1
+    yp ← valeur aléatoire entre 0 et 1
+    RETOURNER (xp^2 + yp^2 < 1)
+    FIN FONCTION
+    
+    FONCTION MonteCarloPartial(n_charge)
+    ncible_partial ← 0
+    POUR i DE 1 À n_pcharge FAIRE
+    SI TirerPoint() ALORS
+    ncible_partial ← ncible_partial + 1
+    FIN SI
+    FIN POUR
+    RETOURNER ncible_partial
+    FIN FONCTION
+    
+    PROCÉDURE PRINCIPALE
+    n_charge ← n_tot / n_workers
+    Liste ncibles ← Liste vide
+    
+        POUR chaque worker DE 1 À n_workers
+            ncible_partial ← MonteCarloPartial(n_charge)
+            AJOUTER ncible_partial à ncibles
+        FIN POUR
+    
+        ncible_total ← Somme des valeurs dans ncibles
+        π ← 4 * ncible_total / n_tot
+        AFFICHER "Estimation de π : ", π
+    FIN PROCÉDURE
+
+#### Explications en pseudo-code :
+
+Chaque worker effectue une partie des calculs (calcul de ncible_partial).
+
+Workers :
+Chaque worker travaille de manière indépendante, calculant son propre ncible_partial pour un sous-ensemble des points(n_charge).
+
+Collecte des résultats :
+
+Le master collecte les résultats de chaque worker et effectue une somme des ncible_partial.
+
+Estimation de π :
+
+Le master calcule π en utilisant la formule π ≈ 4 * ncible_total / n_tot.
+
+## Mise en oeuvre sur Machine à mémoire partagé 
+###  a. Analyse de Assigment102
+
+
+#### **1. Classes principales**
+- **`Assignment102` :** Point d’entrée, initialise le programme et soumet les tâches Monte Carlo au pool de threads.
+- **`PiMonteCarlo` :** Chaque instance représente une tâche indépendante effectuant des tirages et mettant à jour un compteur partagé.
+- **`MonteCarlo` :** Fournit la logique pour générer des points aléatoires et vérifier leur appartenance au quart de disque.
+
+#### **2. Package `Concurrent`**
+Ce package contient les outils nécessaires pour gérer efficacement les threads et la synchronisation.
+
+##### **`Executors`**
+- Classe utilitaire statique pour créer et configurer des pools de threads.
+- Dans cette implémentation, la méthode **`newWorkStealingPool()`** est utilisée pour générer un **pool de threads adaptatif**, qui :
+   - Exploite efficacement tous les cœurs données en paramétres.
+   - Distribue dynamiquement les tâches en fonction des besoins pour maximiser les performances.
+- **Responsabilité :** Simplifie la configuration initiale du pool de threads.
+
+##### **`ExecutorService`**
+- Interface principale pour gérer l'exécution des tâches soumises au pool de threads.
+- Permet un contrôle précis sur la gestion du cycle de vie des threads, avec des méthodes comme :
+   - **`execute()` :** Lance une tâche immédiatement.
+   - **`shutdown()` :** Arrête proprement le pool une fois que toutes les tâches en attente sont terminées.
+   - **`isTerminated()` :** Vérifie si toutes les tâches ont été exécutées.
+- **Responsabilité :** Fournit une API pour interagir avec le pool créé par `Executors`.
+
+##### ** Role de `Executors` et `ExecutorService`**
+- **`Executors` :** Configure et initialise les pools de threads.
+- **`ExecutorService` :** Fournit les outils pour gérer les tâches dans ces pools.
+
+##### **`AtomicInteger`**
+- Utilisé pour synchroniser l’accès au compteur partagé `nAtomSuccess` (nombre de points dans le quart de disque).
+- Méthode clé : **`incrementAndGet()`**, qui effectue une incrémentation atomique pour éviter les conflits entre threads.
+
+#### **3. Paradigme chosi**
+##### Modèle utilisé : Itération parallèle.
+Chaque tâche Monte Carlo correspond à une itération indépendante, soumise au pool de threads.
+Les tâches ne partagent aucune donnée directement entre elles.
+##### Programmation parallèle sur mémoire partagée.
+Tous les threads partagent le même espace mémoire,
+#### **4. Gestion des tâches**
+1. **Création des tâches :**
+   - Chaque tâche Monte Carlo est encapsulée dans une instance de `PiMonteCarlo` et soumise au pool de threads via `ExecutorService`.
+
+2. **Exécution :**
+   - `newWorkStealingPool()` distribue dynamiquement les tâches entre les threads, qui effectuent leurs calculs de manière indépendante.
+
+3. **Synchronisation :**
+   - Les threads mettent à jour le compteur atomique partagé (`AtomicInteger`) en cas de succès (point dans le quart de disque).
+
+4. **Arrêt et collecte des résultats :**
+   - Après soumission de toutes les tâches, le pool est arrêté avec `shutdown()`, et les résultats sont agrégés pour calculer la valeur finale de Pi.
+
+#### **5. Optimisations possibles**
+1. **Compteurs locaux :** Réduire les conflits en utilisant des compteurs locaux pour chaque thread, puis agréger les résultats à la fin (Comme fait le code Master Worker que nous verrons plus tard).
+2.  **Comptage inversé :** Compter les points en dehors du quart de disque pour réduire les appels à incrementAndGet(). En comptabilisant les points qui ne sont pas dans le quart de cercle, on réduit la contention sur le compteur atomique, ce qui minimise le goulot d'étranglement. Avec cette approche, seulement 25 % des tâches nécessitent une synchronisation, contre 75 % si l'on comptabilise les points à l'intérieur du quart de cercle.
+
+#### **6. Correspondance avec le pseudo-code de Monte Carlo**
+L'implémentation correspond au pseudo-code d'itération parallèle avec les adaptations suivantes :
+1. **Gestion des sections critiques** : Le compteur ncible est remplacé par un AtomicInteger pour garantir un accès sécurisé et éviter les conflits entre threads.
+2. **Gestion des threads** : Le découplage des tâches est assuré par ExecutorService, permettant une gestion optimale des tâches en parallèle.
+
+###  a. Analyse de Pi.java
+
+
+#### **1. Classes principales**
+
+- **Pi** : Contient la méthode `main()` qui initialise l'exécution. Elle crée une instance de la classe **Master** et appelle la méthode `DoRun()`.
+- **Master** : Gère la distribution des tâches de calcul entre les **Workers**. Elle utilise un **ExecutorService** pour exécuter les tâches en parallèle et agréger les résultats pour calculer la valeur de π.
+- **Worker** : Représente une tâche parallèle sous forme de **Callable<Long>**. Chaque **Worker** effectue une partie du calcul Monte Carlo et retourne un **Future<Long>** avec le nombre de points dans le quart de disque pour un sous-ensemble des itérations.
+
+
+
+#### **2. Package `Concurrent`**
+
+- **ExecutorService** : Interface qui gère l'exécution des tâches. Elle permet de soumettre des tâches parallèles et de gérer leur exécution via des pools de threads.
+    - **`invokeAll()`** : Cette méthode permet d'exécuter toutes les tâches **Callable** dans une liste de manière parallèle. Elle bloque jusqu'à ce que toutes les tâches soient terminées et retourne une liste de **Future** représentant les résultats des tâches. Dans notre cas, elle est utilisée pour soumettre les **Workers** au pool de threads, permettant ainsi l'exécution parallèle des tâches.
+
+- **Executors** : Classe utilitaire qui permet de créer des instances d'**ExecutorService**, en particulier avec **newFixedThreadPool()** qui crée un pool de threads fixe pour gérer les tâches des **Workers**.
+
+- **Future** : Un objet représentant un calcul dont le résultat sera disponible dans le futur. Chaque **Worker** renvoie un **Future<Long>** avec le résultat partiel. L'appel à `Future.get()` bloque l'exécution du thread principal jusqu'à ce que le calcul soit terminé.
+
+- **Callable** : Interface similaire à **Runnable**, mais qui permet de retourner un résultat. Dans notre cas, chaque **Worker** est un **Callable<Long>** qui calcule le nombre de points tombant dans le quart de disque pour une portion des itérations.
+
+
+#### **3. Paradigme choisi**
+
+Le paradigme choisi repose sur le modèle **Master/Worker**. Le **Master** distribue les tâches aux **Workers**, et chaque **Worker** effectue les calculs en parallèle pour estimer la valeur de π. Une fois tous les résultats partiels collectés, le **Master** les agrège pour obtenir la valeur finale.
+
+
+
+#### **4. Gestion des tâches**
+
+- **ExecutorService** : Le calcul est distribué entre les **Workers** via un pool de threads fixe, géré par un **ExecutorService**. Chaque tâche de calcul est représentée par un **Callable<Long>** et est soumise au pool de threads pour une exécution parallèle.
+
+- **Future** : Chaque tâche retourne un **Future<Long>**, ce qui permet de récupérer les résultats de manière synchrone. L'appel à `Future.get()` bloque le thread principal jusqu'à ce que tous les calculs soient terminés, garantissant ainsi une synchronisation des résultats.
+
+
+#### **5 Comparaisons avec Assigment 102**
+1. Simplicité
+   Assignment 102 est plus simple, avec un modèle direct utilisant des threads et un compteur atomique. Cela le rend facile à comprendre et à implémenter.
+
+2. Efficacité
+   Pi.java est plus efficace, car il minimise la synchronisation et utilise les Futures et l'ExecutorService pour gérer les tâches de manière fluide et éviter les goulots d'étranglement.
+
+3. Parallélisme
+   Pi.java exploite mieux le parallélisme, en distribuant les tâches avec ces Workers qui travaille de maniére indépendante et non pas besoin d'attendre que d'autres taches finis.
+
+
+#### **6. Correspondance avec le pseudo-code de Monte Carlo**
+
+L'implémentation suit le pseudo-code de Monte Carlo avec les adaptations suivantes :
+
+- **Master** : La classe **Master** divise `n_tot` en sous-tâches égales entre les **Workers**. Chaque **Worker** exécute la fonction `MonteCarloPartial(n_charge)` et retourne un **Future**. Le **Master** utilise un **ExecutorService** (FixedThreadPool) pour gérer l'exécution parallèle des tâches et collecter les résultats via `Future.get()`.
+
+- **Workers** : Chaque **Worker** est un **Callable** qui effectue une partie du calcul en comptant les points dans le quart de disque. Le **Future** retourné permet de récupérer le résultat lorsque le calcul est terminé.
+
+- **ExecutorService** : Le **ExecutorService** gère le pool de threads et assure l'exécution parallèle des tâches. Il permet de simplifier la gestion des threads et la synchronisation des résultats avec les **Futures**.
+
+- **Division équivalente** : Le nombre total de tirages (`n_tot`) est divisé entre les **Workers** de manière égale (`n_charge = n_tot / n_workers`).
+
+- **Agrégation des résultats** : Les résultats des **Workers** sont récupérés via les **Futures** et agrégés pour calculer l'estimation finale de π, avec `π = 4 * ncible_total / n_tot`.
+
+##  4.Analyse des performances de Pi et Assigment 102
+
+Nous comparerons l’efficacité des implémentations Pi.java et Assignment 102 en analysant deux aspects :
+
+**Scalabilité forte** : Elle évalue les performances lorsque le nombre de threads augmente, mais que le nombre total de points reste fixe. Cet aspect permet de voir si chaque implémentation utilise efficacement les ressources multiprocesseurs disponibles.
+
+**Scalabilité faible** : Elle mesure la capacité d’un programme à maintenir des performances constantes lorsque le nombre total de points augmente proportionnellement au nombre de threads. Cela reflète l’efficacité de la gestion des charges de travail croissantes.
+
+Pour les tests, nous choisirons un total de points de 10^6, 10^7 et 10^8 * 16. Cette sélection permet d’analyser l’impact de la charge de travail sur les performances tout en garantissant une granularité suffisante pour observer les différences. Les valeurs inférieures (10 à 10^5) ne seront pas analysées, car les temps d’exécution sont presque équivalents et peu significatifs. De plus, multiplier par 16 permet de tester la scalabilité avec différents nombres de threads : 1, 2, 4, 8 et 16.
+
+Pour le calcul de la scalabilité, nous représentons en abscisse (axe horizontal) le nombre de processeurs/threads utilisés et en ordonnée (axe vertical) le **speedup**.
+
+Le **speedup** mesure l'accélération obtenue grâce à la parallélisation. Il se calcule à l'aide de la formule suivante :
+
+**Speedup = T1 / Tp**,
+
+où :
+- **T1** est le temps d'exécution en mode séquentiel (1 thread),
+- **Tp** est le temps d'exécution avec *p* threads.
+
+Un speedup idéal (linéaire) en **scalabilité forte** se traduit par une courbe où la valeur double lorsque le nombre de threads double, pour une taille de problème fixe. Cela reflète une parfaite répartition du travail entre les threads.
+
+En **scalabilité faible**, le speedup est observé en augmentant à la fois la taille du problème et le nombre de threads de manière proportionnelle. Ici, un speedup linéaire indique que le système maintient une efficacité constante malgré l'augmentation de la charge.
+
+### Automatisation des tests et leurs traitements
+
+Il ya des scripts  permettant d'automatiser les tests pour évaluer les performances de **scalabilité forte** et **scalabilité faible**.
+
+- **Script `script_scalabilite_forte.bat`** :  
+  Ce script divise le nombre total de points (**$TOTAL_POINTS**) de manière fixe et fait varier le nombre de threads (**$THREAD_COUNTS**). Il exécute chaque configuration plusieurs fois (**$REPEAT_COUNT**) pour garantir des mesures fiables. Les résultats sont enregistrés dans des fichiers CSV distincts pour les programmes **Pi** et **Assignment102**.
+
+- **Script `script_scalabilite_faible.bat`** :  
+  Ici, le script augmente proportionnellement le nombre total de points avec le nombre de threads. Chaque **thread** traite une charge de travail fixe (**$pointsParTravailleur**), simulant une augmentation uniforme de la taille du problème. Les fichiers CSV collectent les résultats pour analyser l'efficacité parallèle.
+
+Pour le traitement on utilise la classe PiAverageToCsv qui  permet de calculer la moyenne des résultats pour chaque configuration de test, en regroupant les 5 répétitions effectuées. Cela facilite l'analyse en lissant les données pour chaque expérience.
+
+Avec les résultats obtenus sous forme de fichiers CSV, j'utilise un code Python pour calculer le speed-up et tracer les graphes correspondants. Ce script extrait les données, calcule le speed-up en comparant le temps d'exécution avec un seul processeur à celui avec plusieurs processeurs, et génère un graphique montrant la scalabilité forte et faible, avec une courbe pour chaque valeur unique de Ntot. Les graphes incluent également une référence au speed-up idéal pour évaluer l'efficacité parallèle.
+
+
+### Expérience 1 : calcul de la stabilité forte (Code : assigment102 : Nombre de Points : 10^6,10^7 *16  Nombre de processeurs : 1,2,4,8,16)
+| PI   | Difference | Error | Ntot             | AvailableProcessors | TimeDuration(ms) |
+|------|------------|-------|------------------|---------------------|------------------|
+|3,141701|0,000108|0,000363| 16000000,000000  |1,000000|265,600000|
+3,142529|0,000936|0,000433| 16000000,000000  |2,000000|497,600000|
+3,142360|0,000767|0,000411| 16000000,000000  |4,000000|798,000000|
+3,141881|0,000288|0,000238| 16000000,000000  |8,000000|1048,600000|
+3,142393|0,000800|0,000411| 16000000,000000  |16,000000|1154,800000|
+3,141688|0,000095|0,000080| 160000000,000000 |1,000000|2942,000000|
+3,141531|-0,000062|0,000049| 160000000,000000 |2,000000|4545,600000|
+3,141605|0,000012|0,000073| 160000000,000000 |4,000000|7998,200000|
+3,141542|-0,000051|0,000126| 160000000,000000 |8,000000|9142,600000|
+3,141311|-0,000282|0,000214| 160000000,000000 |16,000000|9784,000000|
+
+### Expérience 2 : calcul de la stabilité forte (Code : Pi : Nombre de Points : 10^6,10^7,10^8*16  Nombre de processeurs : 1,2,4,8,16)
+| PI   | Difference | Error | Ntot              | AvailableProcessors | TimeDuration(ms) |
+|------|------------|-------|-------------------|---------------------|------------------|
+|3,141830|0,000237|0,000124| 16000000,000000   |1,000000|115,400000|
+|3,141716|0,000123|0,000269| 16000000,000000   |2,000000|73,600000|
+|3,140863|-0,000730|0,000365| 16000000,000000   |4,000000|59,600000|
+|3,141544|-0,000049|0,000204| 16000000,000000   |8,000000|52,200000|
+|3,142654|0,001061|0,000501| 16000000,000000   |16,000000|75,800000|
+|3,141629|0,000036|0,000083| 160000000,000000  |1,000000|839,200000|
+|3,141530|-0,000063|0,000051| 160000000,000000  |2,000000|474,000000|
+|3,141615|0,000022|0,000054| 160000000,000000  |4,000000|318,200000|
+|3,141845|0,000253|0,000106| 160000000,000000  |8,000000|202,800000|
+|3,141546|-0,000047|0,000119| 160000000,000000  |16,000000|222,400000|
+|3,141681|0,000088|0,000039| 1600000000,000000 |1,000000|8541,600000|
+|3,141735|0,000142|0,000045| 1600000000,000000 |2,000000|4457,800000|
+|3,141574|-0,000018|0,000022| 1600000000,000000 |4,000000|2672,40000|
+|3,141526|-0,000067|0,000032| 1600000000,000000 |8,000000|1538,200000|
+|3,141510|-0,000083|0,000042| 1600000000,000000 |16,000000|1567,400000|
+
+
+### Expérience 5: (10^7 nombre de points,Pi.java)
+| PI   | Difference | Error | Ntot      | AvailableProcessors | TimeDuration(ms) |
+|------|------------|-------|-----------|---------------------|------------------|
+|      |            |       | 160000000 | 1                   |                  |
+|      |            |       | 160000000 | 1                   |                  |
+|      |            |       | 160000000 | 1                   |                  |
+|      |            |       | 160000000 | 1                   |                  |
+|      |            |       | 160000000 | 2                   |                  |
+|      |            |       | 160000000 | 2                   |                  |
+|      |            |       | 160000000 | 2                   |                  |
+|      |            |       | 160000000 | 2                   |                  |
+|      |            |       | 160000000 | 2                   |                  |
+|      |            |       | 160000000 | 2                   |                  |
+|      |            |       | 160000000 | 4                   |                  |
+|      |            |       | 160000000 | 4                   |                  |
+|      |            |       | 160000000 | 4                   |                  |
+|      |            |       | 160000000 | 4                   |                  |
+|      |            |       | 160000000 | 4                   |                  |
+|      |            |       | 160000000 | 8                   |                  |
+|      |            |       | 160000000 | 8                   |                  |
+|      |            |       | 160000000 | 8                   |                  |
+|      |            |       | 160000000 | 8                   |                  |
+|      |            |       | 160000000 | 8                   |                  |
+|      |            |       | 160000000 | 16                  |                  |
+|      |            |       | 160000000 | 16                  |                  |
+|      |            |       | 160000000 | 16                  |                  |
+|      |            |       | 160000000 | 16                  |                  |
+|      |            |       | 160000000 | 16                  |                  |
+
+
+### Expérience 6 : (10^8 nombre de points,Pi.java)
+| PI   | Difference | Error | Ntot       | AvailableProcessors | TimeDuration(ms) |
+|------|------------|-------|------------|---------------------|------------------|
+|      |            |       | 1600000000 | 1                   |                  |
+|      |            |       | 1600000000 | 1                   |                  |
+|      |            |       | 1600000000 | 1                   |                  |
+|      |            |       | 1600000000 | 1                   |                  |
+|      |            |       | 1600000000 | 2                   |                  |
+|      |            |       | 1600000000 | 2                   |                  |
+|      |            |       | 1600000000 | 2                   |                  |
+|      |            |       | 1600000000 | 2                   |                  |
+|      |            |       | 1600000000 | 2                   |                  |
+|      |            |       | 1600000000 | 2                   |                  |
+|      |            |       | 1600000000 | 4                   |                  |
+|      |            |       | 1600000000 | 4                   |                  |
+|      |            |       | 1600000000 | 4                   |                  |
+|      |            |       | 1600000000 | 4                   |                  |
+|      |            |       | 1600000000 | 4                   |                  |
+|      |            |       | 1600000000 | 8                   |                  |
+|      |            |       | 1600000000 | 8                   |                  |
+|      |            |       | 1600000000 | 8                   |                  |
+|      |            |       | 1600000000 | 8                   |                  |
+|      |            |       | 1600000000 | 8                   |                  |
+|      |            |       | 1600000000 | 16                  |                  |
+|      |            |       | 1600000000 | 16                  |                  |
+|      |            |       | 1600000000 | 16                  |                  |
+|      |            |       | 1600000000 | 16                  |                  |
+|      |            |       | 1600000000 | 16                  |                  |
+
+
+## 5. Mise en oeuvre de MonteCarlo en mémoire distribué 
+
+### Illustration
+![MonteCarloCodeDistribué](MasterSocketUml.png)
+![DiagrammeDesTachesMasterWorker](DiagrammedestachesMASTERSocket.png)
+
+### **Présentation de la Conception**
+
+L'architecture décrite est une **programmation distribuée** basée sur le modèle **Master-Worker**. Les **Workers** communiquent avec le **Master** via des **sockets** pour répartir les tâches et récupérer les résultats.
+
+- **MasterSocket** : Le **Master** coordonne l'exécution, distribue les tâches aux **Workers**, récupère leurs résultats partiels et les fusionne pour obtenir le résultat final. La communication entre le **Master** et les **Workers** se fait via un **socket**.
+
+- **WorkerSocket** : Chaque **Worker** reçoit des instructions du **MasterSocket**, exécute les calculs Monte Carlo en appelant la méthode du **Master** (dans la classe `PI.java`), et retourne les résultats au **Master**.
+
+- **ServerSocket** : Ce **socket** est responsable de gérer les connexions réseau, permettant au **Master** d'accepter les connexions des **Workers**.
+
+- **Classes I/O (BufferedReader, PrintWriter)** : Ces classes facilitent l'échange de données entre le **Master** et les **Workers** à travers des flux de données.
+
+- **IOException** : Gère les erreurs de communication, tant pour les sockets que pour les flux d'entrée et de sortie.
+
+
+### **Le Paradigme : Programmation Distribuée et Multiniveaux**
+
+Le système repose sur un modèle **Master-Worker** en **programmation distribuée**. Les **Workers** et le **Master** échangent des données via des **sockets**.
+
+Cependant, la dimension **multiniveaux** entre en jeu lorsque les **Workers** appellent le **Master** de `PI.java`, où le calcul Monte Carlo est effectué via un **thread** dans un environnement parallèle. Ainsi, le système devient non seulement distribué (grâce à la communication via des **sockets**), mais aussi multiniveaux, car un niveau de traitement parallèle (via le **Master** et les **Workers**) est imbriqué dans l'architecture.
+
+En résumé, il s'agit d'une **programmation distribuée** utilisant des **sockets** pour la communication entre le **Master** et les **Workers**, avec une **programmation multiniveaux** lorsque les **Workers** interagissent avec le **Master** de PI.java dans un environnement parallèle.
+
+
+
+Plan à suivre : 
+1 Methode MC
+2 Algo et parallélisation
+   a) Iteraration
+   b) MasterWorker
+3 Mise en oeuvre sur Machine à Partagé
+   a) Analyse Assignment 102
+   b) Analyse Pi.java
+4 Qualité de test de perf
+
+5 Mise en oeuvre en memoire dist
+   a) Java Socket Mw
+
+6 Perf MW
+
+
