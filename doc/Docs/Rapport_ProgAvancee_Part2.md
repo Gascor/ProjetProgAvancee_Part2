@@ -180,8 +180,8 @@ FIN PROCÉDURE
 ```
 
 #### Explications :
-1. **Tirage aléatoire** : Chaque point $( (x_p, y_p) \ ) $ est généré de manière uniforme dans l'intervalle [0, 1].
-2. **Vérification** : La condition \$$ ( x_p^2 + y_p^2 < 1 \) détermine si le point est dans le quart de cercle.
+1. **Tirage aléatoire** : Chaque point $(x_p, y_p)$ est généré de manière uniforme dans l'intervalle [0, 1].
+2. **Vérification** : La condition $ ( x_p^2 + y_p^2 < 1 )$ détermine si le point est dans le quart de cercle.
 3. **Compteur** : Le compteur est incrémenté pour chaque point valide.
 4. **Parallélisation** : Les itérations sont effectuées indépendamment sur plusieurs threads ou cœurs du processeur.
 
@@ -226,10 +226,10 @@ FIN PROCÉDURE
 ```
 
 #### Explications :
-1. **Division de la charge** : Le nombre total de points \( n_{\text{tot}} \) est divisé également entre \( n_{\text{workers}} \).
+1. **Division de la charge** : Le nombre total de points $( n_{\text{tot}} )$ est divisé également entre $( n_{\text{workers}} )$.
 2. **Travail indépendant** : Chaque **Worker** effectue son propre calcul sur un sous-ensemble des points.
 3. **Récupération des résultats** : Le **Master** collecte les résultats partiels pour les additionner.
-4. **Calcul final** : Une fois les résultats combinés, π est calculé avec la même formule.
+4. **Calcul final** : Une fois les résultats combinés, $π$ est calculé avec la même formule.
 
 <br>
 
@@ -241,14 +241,77 @@ FIN PROCÉDURE
 | **Avantages**           | Simplicité et scalabilité directe             | Bonne gestion des ressources et modularité    |
 | **Inconvénients**       | Synchronisation complexe pour de grands \( n \) | Augmentation de la latence avec de nombreux **Workers** |
 
----
+## 3. Mise en œuvre sur Machine Partagée <a id="mise-en-oeuvre-sur-machine-partage"></a>
 
-Cette rédaction offre un pseudo-code reformulé et une explication claire tout en restant dans l'esprit de votre contenu initial.
+La méthode Monte Carlo a été implémentée sur une architecture à mémoire partagée en utilisant des outils avancés de gestion des threads. Les programmes **Assignment102** et **Pi.java** illustrent deux approches complémentaires pour effectuer ce calcul parallèle.
 
+### 3.1. Analyse de **Assignment102** <a id="analyse-assignment-102"></a>
 
----
+L'implémentation de **Assignment102** repose sur l'utilisation des threads pour répartir les calculs Monte Carlo de manière efficace.
 
-Ce contenu répond parfaitement à la section "Méthode MC" décrite dans votre plan.
+#### 3.1.1. Classes principales
+
+- **`Assignment102`** : C'est le point d'entrée du programme. Il initialise les paramètres, configure un pool de threads, et soumet les tâches de calcul Monte Carlo au pool.
+- **`PiMonteCarlo`** : Chaque instance représente une tâche indépendante qui effectue des tirages aléatoires et met à jour un compteur partagé.
+- **`MonteCarlo`** : Cette classe encapsule la logique pour générer des points aléatoires et vérifier leur appartenance au quart de cercle.
+
+#### 3.1.2. Utilisation du package `Concurrent`
+
+Le programme s'appuie sur le package Java `java.util.concurrent` pour gérer efficacement le parallélisme.
+
+##### **`Executors`**
+
+- Classe utilitaire statique permettant de configurer des pools de threads.
+- Dans **Assignment102**, la méthode `newWorkStealingPool()` est utilisée pour créer un **pool adaptatif**, capable de :
+  - Exploiter dynamiquement les ressources disponibles sur le matériel.
+  - Répartir les tâches en fonction des besoins pour maximiser les performances.
+
+##### **`ExecutorService`**
+
+- Interface principale pour gérer le cycle de vie des threads dans un pool.
+- Fonctionnalités majeures utilisées :
+  - **`submit()`** : Permet d'envoyer des tâches au pool de threads.
+  - **`shutdown()`** : Arrête proprement le pool une fois toutes les tâches terminées.
+  - **`isTerminated()`** : Vérifie si toutes les tâches sont exécutées.
+
+##### **Rôle combiné de `Executors` et `ExecutorService`**
+
+- **`Executors`** : Configure et initialise les pools de threads.
+- **`ExecutorService`** : Fournit une interface pour interagir avec ces pools.
+
+##### **`AtomicInteger`**
+
+- Utilisé pour synchroniser l'accès au compteur partagé, évitant les conflits lors de l'incrémentation.  
+- La méthode **`incrementAndGet()`** garantit une opération atomique et sécurisée.
+
+#### 3.1.3. Paradigme choisi
+
+- **Modèle utilisé :** Itérations parallèles.  
+Chaque tâche représente une itération Monte Carlo indépendante, soumise à un pool de threads.  
+- **Programmation sur mémoire partagée :** Les threads partagent un espace mémoire global.
+
+#### 3.1.4. Gestion des tâches dans **Assignment102**
+
+1. **Création des tâches :**
+   - Chaque tâche Monte Carlo est encapsulée dans une instance de `PiMonteCarlo`.
+   - Les tâches sont soumises au pool de threads via `ExecutorService`.
+
+2. **Exécution parallèle :**
+   - Le pool de threads géré par `newWorkStealingPool()` répartit dynamiquement les calculs.
+
+3. **Synchronisation :**
+   - Le compteur partagé \( n_{\text{cible}} \) est mis à jour de manière atomique avec `AtomicInteger`.
+
+4. **Agrégation des résultats :**
+   - Une fois toutes les tâches terminées, les résultats sont collectés et combinés pour calculer \( \pi \).
+
+#### 3.1.5. Optimisations possibles
+
+1. **Compteurs locaux :**  
+   Réduire les conflits sur le compteur partagé en utilisant des compteurs locaux par thread, puis en combinant leurs résultats.
+2. **Comptage inversé :**  
+   Compter les points en dehors du cercle pour limiter les mises à jour atomiques, réduisant ainsi la contention.
+
 
 
 > **Liens de Navigation**
