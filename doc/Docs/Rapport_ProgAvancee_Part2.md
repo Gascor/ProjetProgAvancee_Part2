@@ -148,11 +148,11 @@ Les dépendances entre les tâches sont essentielles pour structurer l'algorithm
 
 <br>
 
-### 2.1. **Parallélisation par Itérations Indépendantes** <a id="iteration"></a>
+### **2.1. Parallélisation par Itérations Indépendantes** <a id="iteration"></a>
 
 Ce paradigme consiste à tirer des points aléatoires et à vérifier leur appartenance au quart de cercle de manière simultanée. Comme souligné au dessus, chaque itération est indépendante des autres, ce qui permet une parallélisation optimale.
 
-#### Pseudo-code
+#### Pseudo-code :
 
 ```plaintext
 ENTRÉES :
@@ -187,11 +187,11 @@ FIN PROCÉDURE
 
 <br>
 
-### 2.2. **Modèle Master-Worker** <a id="masterworker"></a>
+### **2.2. Modèle Master-Worker** <a id="masterworker"></a>
 
 Dans ce paradigme, le travail est réparti entre plusieurs travailleurs (**Workers**) par un gestionnaire central (**Master**). Les résultats sont collectés et combinés pour obtenir l'estimation finale de π.
 
-#### Pseudo-code
+#### Pseudo-code :
 
 ```plaintext
 ENTRÉES :
@@ -245,28 +245,28 @@ FIN PROCÉDURE
 
 La méthode Monte Carlo a été implémentée sur une architecture à mémoire partagée en utilisant des outils avancés de gestion des threads. Les programmes **Assignment102** et **Pi.java** illustrent deux approches complémentaires pour effectuer ce calcul parallèle.
 
-### 3.1. Analyse de **Assignment102** <a id="analyse-assignment-102"></a>
+### **3.1. Analyse de Assignment102** <a id="analyse-assignment-102"></a>
 
 L'implémentation de **Assignment102** repose sur l'utilisation des threads pour répartir les calculs Monte Carlo de manière efficace.
 
-#### 3.1.1. Classes principales
+#### **3.1.1. Classes principales**
 
 - **`Assignment102`** : C'est le point d'entrée du programme. Il initialise les paramètres, configure un pool de threads, et soumet les tâches de calcul Monte Carlo au pool.
 - **`PiMonteCarlo`** : Chaque instance représente une tâche indépendante qui effectue des tirages aléatoires et met à jour un compteur partagé.
 - **`MonteCarlo`** : Cette classe encapsule la logique pour générer des points aléatoires et vérifier leur appartenance au quart de cercle.
 
-#### 3.1.2. Utilisation du package `Concurrent`
+#### **3.1.2. Utilisation du package `Concurrent`**
 
 Le programme s'appuie sur le package Java `java.util.concurrent` pour gérer efficacement le parallélisme.
 
-##### **`Executors`**
+##### ● **`Executors`**
 
 - Classe utilitaire statique permettant de configurer des pools de threads.
 - Dans **Assignment102**, la méthode `newWorkStealingPool()` est utilisée pour créer un **pool adaptatif**, capable de :
   - Exploiter dynamiquement les ressources disponibles sur le matériel.
   - Répartir les tâches en fonction des besoins pour maximiser les performances.
 
-##### **`ExecutorService`**
+##### ● **`ExecutorService`**
 
 - Interface principale pour gérer le cycle de vie des threads dans un pool.
 - Fonctionnalités majeures utilisées :
@@ -274,23 +274,23 @@ Le programme s'appuie sur le package Java `java.util.concurrent` pour gérer eff
   - **`shutdown()`** : Arrête proprement le pool une fois toutes les tâches terminées.
   - **`isTerminated()`** : Vérifie si toutes les tâches sont exécutées.
 
-##### **Rôle combiné de `Executors` et `ExecutorService`**
+##### ● **Rôle combiné de `Executors` et `ExecutorService`**
 
 - **`Executors`** : Configure et initialise les pools de threads.
 - **`ExecutorService`** : Fournit une interface pour interagir avec ces pools.
 
-##### **`AtomicInteger`**
+##### ● **`AtomicInteger`**
 
 - Utilisé pour synchroniser l'accès au compteur partagé, évitant les conflits lors de l'incrémentation.  
 - La méthode **`incrementAndGet()`** garantit une opération atomique et sécurisée.
 
-#### 3.1.3. Paradigme choisi
+#### **3.1.3. Paradigme choisi**
 
 - **Modèle utilisé :** Itérations parallèles.  
 Chaque tâche représente une itération Monte Carlo indépendante, soumise à un pool de threads.  
 - **Programmation sur mémoire partagée :** Les threads partagent un espace mémoire global.
 
-#### 3.1.4. Gestion des tâches dans **Assignment102**
+#### **3.1.4. Gestion des tâches dans Assignment102**
 
 1. **Création des tâches :**
    - Chaque tâche Monte Carlo est encapsulée dans une instance de `PiMonteCarlo`.
@@ -300,20 +300,70 @@ Chaque tâche représente une itération Monte Carlo indépendante, soumise à u
    - Le pool de threads géré par `newWorkStealingPool()` répartit dynamiquement les calculs.
 
 3. **Synchronisation :**
-   - Le compteur partagé \( n_{\text{cible}} \) est mis à jour de manière atomique avec `AtomicInteger`.
+   - Le compteur partagé $( n_{\text{cible}} )$ est mis à jour de manière atomique avec `AtomicInteger`.
 
 4. **Agrégation des résultats :**
-   - Une fois toutes les tâches terminées, les résultats sont collectés et combinés pour calculer \( \pi \).
+   - Une fois toutes les tâches terminées, les résultats sont collectés et combinés pour calculer $( \pi )$.
 
-#### 3.1.5. Optimisations possibles
+#### **3.1.5. Optimisations possibles**
 
 1. **Compteurs locaux :**  
    Réduire les conflits sur le compteur partagé en utilisant des compteurs locaux par thread, puis en combinant leurs résultats.
 2. **Comptage inversé :**  
    Compter les points en dehors du cercle pour limiter les mises à jour atomiques, réduisant ainsi la contention.
 
+### **3.2. Analyse de Pi.java** <a id="analyse-pijava"></a>
+
+**Pi.java** implémente la méthode Monte Carlo en utilisant le paradigme Master-Worker. Il exploite un pool de threads fixe pour paralléliser les calculs.
+
+#### **3.2.1. Classes principales**
+
+- **`Pi`** : Contient la méthode `main()`. Elle initialise les paramètres, configure le pool de threads, et appelle la méthode `doRun()` de la classe Master.
+- **`Master`** : Gère la distribution des tâches de calcul parmi les **Workers**. Elle coordonne l'exécution parallèle et collecte les résultats.
+- **`Worker`** : Chaque Worker est une tâche indépendante (implémentée avec l'interface `Callable<Long>`). Elle effectue une partie du calcul et retourne le nombre de points appartenant au quart de cercle.
+
+#### **3.2.2. Utilisation des outils `Concurrent`**
+
+##### ● **`ExecutorService`**
+- Crée un pool fixe avec `newFixedThreadPool()` pour exécuter les Workers en parallèle.  
+- Méthode utilisée :  
+  - **`invokeAll()`** : Permet de soumettre une liste de tâches `Callable` et d’attendre la fin de leur exécution.
+
+##### ● **`Future`**
+- Représente le résultat asynchrone d’un Worker.  
+- La méthode `get()` permet de récupérer le résultat une fois le calcul terminé.
+
+##### ● **`Callable`**
+- Interface permettant aux Workers de retourner un résultat (contrairement à `Runnable`).
+
+#### **3.2.3. Paradigme choisi**
+
+**Master-Worker** :  
+Le Master distribue $( n_{\text{tot}} )$ points entre plusieurs Workers, puis récupère leurs résultats pour calculer $( \pi )$.
+
+#### **3.2.4. Gestion des tâches dans Pi.java**
+
+1. **Création des tâches :**
+   - Chaque Worker calcule une partie des points dans un sous-ensemble.
+2. **Exécution parallèle :**
+   - Les tâches sont soumises au pool de threads via `invokeAll()`.
+3. **Récupération des résultats :**
+   - Les résultats partiels sont récupérés à l’aide des `Future`.
+4. **Calcul final :**
+   - Le Master agrège les résultats pour calculer $( \pi )$.
+
+---
+
+#### **3.2.5. Comparaison entre **Assignment102** et Pi.java**
+
+| Critère             | Assignment102                                  | Pi.java                                         |
+|---------------------|------------------------------------------------|------------------------------------------------|
+| **Simplicité**      | Utilise des itérations parallèles simples.     | Paradigme Master-Worker avec gestion centrale. |
+| **Parallélisme**    | Les threads partagent une ressource critique.  | Meilleure indépendance des tâches (Workers).  |
+| **Efficacité**      | Plus de contention sur le compteur partagé.    | Réduction des conflits grâce aux Workers.     |
+
 
 
 > **Liens de Navigation**
 >
-> [Retour en haut](#compte-rendu---développement-avancé)
+> [Retour en haut](#debut)
