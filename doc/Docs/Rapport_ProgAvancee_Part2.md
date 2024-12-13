@@ -362,6 +362,122 @@ Le Master distribue $( n_{\text{tot}} )$ points entre plusieurs Workers, puis r�
 | **Parallélisme**    | Les threads partagent une ressource critique.  | Meilleure indépendance des tâches (Workers).  |
 | **Efficacité**      | Plus de contention sur le compteur partagé.    | Réduction des conflits grâce aux Workers.     |
 
+Voici une version réorganisée et reformulée pour les parties **4. Analyse des performances** et **5. Mise en œuvre en mémoire distribuée**, avec des sous-sections légèrement réarrangées pour maintenir la cohérence.
+
+---
+
+## 4. Analyse des performances des implémentations **Pi** et **Assignment102** <a id="qualite-de-test-de-perf"></a>
+
+Nous avons comparé les performances des deux implémentations **Pi.java** et **Assignment102** à travers deux métriques fondamentales : la **scalabilité forte** et la **scalabilité faible**.
+
+### **4.1. Définitions des métriques**
+
+- **Scalabilité forte** : Évalue les performances lorsque le nombre de threads augmente, mais que la charge de travail (le nombre total de points, $(n_{\text{tot}})$ reste constant. Cette mesure permet d’analyser si les ressources multiprocesseurs disponibles sont efficacement exploitées.
+
+- **Scalabilité faible** : Analyse les performances lorsque la taille du problème augmente proportionnellement au nombre de threads. Cela montre la capacité du programme à maintenir des performances constantes malgré une charge de travail croissante.
+
+---
+
+### **4.2. Paramètres et méthodologie**
+
+- **Nombre de points $(n_{\text{tot}})$ :** $(10^5)$, $(10^6)$, et $(10^7 \times 16)$. Ces tailles permettent une granularité suffisante pour observer les différences de performances.
+- **Nombre de threads :** $(1)$, $(2)$, $(4)$, $(8)$, $(16)$.
+- **Métrique clé : Speedup $(S)$** :
+  $$
+  S = \frac{T_1}{T_p}
+  $$
+  Où :
+  - $(T_1)$ est le temps d’exécution en mode séquentiel (1 thread).
+  - $(T_p)$ est le temps d’exécution avec $(p)$ threads.
+
+Un **speedup idéal** en scalabilité forte se manifeste par une courbe linéaire, où la vitesse double lorsque le nombre de threads double.
+
+---
+
+### **4.3. Automatisation et traitement des tests**
+
+#### Scripts d'exécution :
+
+1. **`script_scalabilite_forte.bat`** :  
+   Maintient $(n_{\text{tot}})$ constant tout en augmentant le nombre de threads. Les résultats sont enregistrés dans des fichiers CSV spécifiques à chaque programme.
+
+2. **`script_scalabilite_faible.bat`** :  
+   Augmente $(n_{\text{tot}})$ proportionnellement au nombre de threads pour simuler une charge croissante.
+
+#### Traitement des résultats :
+
+- **Moyennes des exécutions :** Chaque configuration a été répétée $(5)$ fois pour obtenir des résultats fiables. La classe **`PiAverageToCsv`** calcule la moyenne des résultats pour chaque test.
+- **Analyse des speedups :** Un script Python extrait les données CSV, calcule les speedups et génère des graphes pour visualiser la scalabilité forte et faible.
+
+### **4.4. Résultats expérimentaux** (DATA A METTRE VENDREDI MATIN)
+
+#### Scalabilité forte (Assignment102) :
+
+| PI        | Différence   | Erreur       | $(n_{\text{tot}})$   | Threads         | Durée (ms)       |
+|-----------|--------------|--------------|----------------------|-----------------|------------------|
+| 3.141701  | 0.000108     | 0.000363     | $(16 \times 10^6)$   | 1               | 265.6            |
+| 3.142529  | 0.000936     | 0.000433     | $(16 \times 10^6)$   | 2               | 497.6            |
+| 3.142360  | 0.000767     | 0.000411     | $(16 \times 10^6)$   | 4               | 798.0            |
+| ...       | ...          | ...          | ...                  | ...             | ...              |
+
+#### Scalabilité forte (Pi.java) :
+
+| PI        | Différence   | Erreur       | $(n_{\text{tot}})$   | Threads         | Durée (ms)       |
+|-----------|--------------|--------------|----------------------|-----------------|------------------|
+| 3.141830  | 0.000237     | 0.000124     | $(16 \times 10^6)$   | 1               | 115.4            |
+| 3.141716  | 0.000123     | 0.000269     | $(16 \times 10^6)$   | 2               | 73.6             |
+| ...       | ...          | ...          | ...                  | ...             | ...              |
+
+### **4.5. Observations**
+
+- **Assignment102** :
+  - La scalabilité est limitée par le compteur partagé $(n_{\text{cible}})$, qui devient un goulot d’étranglement.
+  - Le speedup est moins linéaire en raison des conflits liés à la synchronisation.
+
+- **Pi.java** :
+  - Grâce au modèle Master-Worker, les Workers fonctionnent indépendamment. Cela réduit les conflits et améliore les performances, notamment pour les charges de travail importantes.
+
+## 5. Mise en œuvre de Monte Carlo en mémoire distribuée <a id="mise-en-oeuvre-en-memoire-distribuee"></a>
+
+### **5.1. Architecture distribuée**
+
+L’approche distribuée repose sur le modèle **Master-Worker**, où :
+
+1. **MasterSocket** :  
+   - Coordonne les tâches.
+   - Envoie les instructions aux **Workers** via des sockets.
+   - Agrège les résultats partiels pour obtenir $( \pi )$.
+
+2. **WorkerSocket** :  
+   - Reçoit les instructions du Master.
+   - Effectue une partie du calcul Monte Carlo.
+   - Retourne les résultats au Master.
+
+3. **Communication via Sockets** :  
+   - Les échanges sont réalisés avec des flux (BufferedReader et PrintWriter) pour assurer une communication fiable entre le Master et les Workers.
+
+### **5.2. Paradigme utilisé**
+
+Le système combine deux niveaux de parallélisation :
+- **Programmation distribuée** : Le calcul est réparti sur plusieurs machines via des sockets.
+- **Programmation parallèle locale** : Chaque Worker exécute ses calculs en parallèle sur ses propres cœurs.
+
+### **5.3. Comparaison avec les implémentations précédentes**
+
+| Critère               | Mémoire partagée             | Mémoire distribuée         |
+|-----------------------|------------------------------|----------------------------|
+| **Facilité d'implémentation** | Simplicité relative.       | Complexité accrue (communication). |
+| **Performance**       | Limité par les conflits de synchronisation. | Évolutif (scalabilité horizontale). |
+| **Utilisation des ressources** | Uniquement sur une machine. | Exploite plusieurs machines. |
+
+### **5.4. Illustration de l'architecture**
+
+#### Diagrammes
+- **Schéma de Monte Carlo Distribué** :  
+  ![Architecture distribuée]()
+
+- **Diagramme des tâches (Master-Worker)** :  
+  ![Diagramme des tâches Master-Worker]()
 
 
 > **Liens de Navigation**
