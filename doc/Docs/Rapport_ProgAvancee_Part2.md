@@ -49,17 +49,31 @@ Chaque section met en lumière un aspect technique clé, depuis les principes al
 
 ## 0bis. Architecture Matérielle <a id="architecture-materielle"></a> 
 
-|            | G25                                                         | I21                                                         | G24                                                         | OnePlus 9                                                   |
+|            | G25                                                         | I21                                                         | G24                                                         | MSI Vector 16 HX A14VIG-299FR (Ordinateur Portable Perso)                                                   |
 |------------|--------------------------------------------------------------|--------------------------------------------------------------|--------------------------------------------------------------|--------------------------------------------------------------|
 | **CPU**    | i7 4790, 4c/8t, 3.6GHz, 4.0GHz Turbo, 64-bit                 | i7 4790, 4c/8t, 3.6GHz, 4.0GHz Turbo, 64-bit                 | i7-12700T, 12c/20t (8p-core, 4e-core), 1.4GHz - 4.7GHz Turbo, 64-bit | i9-14900HX, 24c/32t (8p-core, 16e-core), 2.2Hz - 5.8GHz Turbo, 64-bit |
-| **RAM**    | 8Go RAM Micron MT16KTF1G64AZ-1G6E1 DDR3 PC3L-12800U 2Rx8 1600MHz 1.35v CL11 | 2x8Go RAM Micron MT16KTF1G64AZ-1G6E1 DDR3 PC3L-12800U 2Rx8 1600MHz 1.35v CL11 | 2x32Go RAM Micron MTC16G2085S1SC-48BA1 SODIMM-DDR5 PC5-38400 2Rx8 4800MHz 1.1v CL40 |  |
+| **RAM**    | 8Go RAM Micron MT16KTF1G64AZ-1G6E1 DDR3 PC3L-12800U 2Rx8 1600MHz 1.35v CL11 | 2x8Go RAM Micron MT16KTF1G64AZ-1G6E1 DDR3 PC3L-12800U 2Rx8 1600MHz 1.35v CL11 | 2x32Go RAM Micron MTC16G2085S1SC-48BA1 SODIMM-DDR5 PC5-38400 2Rx8 4800MHz 1.1v CL40 | 2x16Go RAM SK Hynix HMCG78AGBSA095N SODIMM-DDR5 PC5-44800 2Rx8 5600Mhz 1.1v CL46 |
 | **GPU**    | eGPU Intel, Intel® HD Graphics 4600, Mémoire vidéo maxi du sous-ensemble graphique 2Go RAM for VRAM | eGPU Intel, Intel® HD Graphics 4600, Mémoire vidéo maxi du sous-ensemble graphique 2Go RAM for VRAM | eGPU Intel, Intel® HD Graphics 770, 32 cores, 300MHz - 1.5GHz Turbo | NVIDIA RTX 4090, 10492 cuda core, 700Mhz - 2.3Ghz Turbo, 16 Go VRAM 8Ghz |
-| **Disque** | LITEONIT LCS-256L9S-11 256Go, 2.5", 7mm SATA 6Gb/s           | LITEONIT LCS-256L9S-11 256Go, 2.5", 7mm SATA 6Gb/s           | SOLIDIGM SSDPFKNU512GZ 512Go M.2 NVMe PCIe                   | 256Go UFS 3.0                                               |
+| **Disque** | LITEONIT LCS-256L9S-11 256Go, 2.5", 7mm SATA 6Gb/s           | LITEONIT LCS-256L9S-11 256Go, 2.5", 7mm SATA 6Gb/s           | SOLIDIGM SSDPFKNU512GZ 512Go M.2 NVMe PCIe                   | Western Digital WD_Black SN770 1To M.2 Nvme PCIe 4.0, 44Gb/s                                               |
 | **Type de disque** | SSD                                                  | SSD                                                          | SSD                                                          | SSD                                                          |
-| **Fichier de pagination** | Oui                                           | Oui                                                          | Oui                                                          | Non                                                          |
-| **Fichier d’échange** | Oui                                               | Oui                                                          | Oui                                                          | Non                                                          |
+| **Fichier de pagination** | Oui                                           | Oui                                                          | Oui                                                          | Oui                                                          |
+| **Fichier d’échange** | Oui                                               | Oui                                                          | Oui                                                          | Oui                                                          |
 
-TODO (ECRIRE UN PARAGRAPHE DU MATERIEL EMPLOYEE POUR LE TP)
+
+Pour la réalisation de ce projet, la majeure partie des travaux a été effectuée sur mon **ordinateur portable personnel**, un MSI Vector 16 HX A14VIG-299FR, équipé d’un processeur **Intel i9-14900HX**. Cet ordinateur possède des capacités de calcul très élevées grâce à ses **24 cœurs logiques**, ainsi qu’une grande capacité de mémoire vive avec **32 Go de RAM**. L’environnement de développement sur cet ordinateur est **Windows 11**, avec les outils Java nécessaires installés ainsi que Visual Studio Code comme IDE.
+
+Cependant, pour les expérimentations impliquant la **répartition sur plusieurs machines** dans le paradigme **Master-Worker**, des machines du laboratoire de l’IUT ont été utilisées. Ces machines sont équipées de processeurs Intel i7-4790 ou i7-12700T, avec des configurations matérielles variées comme indiqué dans le tableau ci-dessus, cependant pour l'analyse de performance Master Worker il a été préférable que je l'execute en local sur ma machine personnel.
+
+### Utilisation de l’ordinateur portable personnel
+Pour les tests effectués localement, l’ordinateur portable personnel a été utilisé pour :
+- Compiler et exécuter les programmes **Java** (Pi.java, Assignment102.java, etc.).
+- Tester les différents paradigmes de parallélisation, comme les **itérations indépendantes** et le **modèle Master-Worker**, mais uniquement dans un environnement simulé en local.
+- Évaluer les performances des programmes en mémoire partagée grâce à ses nombreux cœurs logiques et sa compatibilité avec les outils modernes de développement.
+
+### Utilisation des machines de l'IUT
+Pour le **TP Master-Worker avec répartition sur plusieurs machines**, les machines de l'IUT ont été configurées en réseau avec des adresses IP spécifiques et des ports ouverts pour assurer la communication entre elles. Ces machines, bien que moins puissantes que mon ordinateur personnel, offrent une infrastructure réseau permettant de tester efficacement le paradigme distribué.
+
+### Outils utilisés pour vérifier la configuration matérielle
 
 - **Msconfig** : un utilitaire Windows qui permet de visualiser et configurer le démarrage et certains aspects de la configuration matérielle.
 - **Gestionnaire de tâches** : utile pour vérifier l'utilisation des ressources en temps réel, notamment l'usage du processeur, de la mémoire et du disque.
@@ -511,13 +525,13 @@ sockets[i] = new Socket(tab_ips[i], tab_ports[i]);
 #### Déploiement des fichiers Java
 Le code Java pour le master et les workers a été déployé sur leurs machines respectives à l'aide de **rsync** ou **scp**. Une fois transféré, le programme a été compilé localement sur chaque machine :
 ```bash
-javac *.java
+javac racineprojet/bin/ racineprojet/src/*.java
 ```
 
 #### Lancement des workers
 Chaque machine worker est configurée pour écouter sur son port attribué, prête à recevoir des requêtes du master. Par exemple :
 ```bash
-java WorkerSocket 25545
+java racineprojet/src/WorkerSocket 25545
 ```
 
 ### 7.3. Exécution et coordination
