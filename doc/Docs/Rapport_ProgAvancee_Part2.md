@@ -352,8 +352,6 @@ Le Master distribue $( n_{\text{tot}} )$ points entre plusieurs Workers, puis r�
 4. **Calcul final :**
    - Le Master agrège les résultats pour calculer $( \pi )$.
 
----
-
 #### **3.2.5. Comparaison entre **Assignment102** et Pi.java**
 
 | Critère             | Assignment102                                  | Pi.java                                         |
@@ -361,10 +359,6 @@ Le Master distribue $( n_{\text{tot}} )$ points entre plusieurs Workers, puis r�
 | **Simplicité**      | Utilise des itérations parallèles simples.     | Paradigme Master-Worker avec gestion centrale. |
 | **Parallélisme**    | Les threads partagent une ressource critique.  | Meilleure indépendance des tâches (Workers).  |
 | **Efficacité**      | Plus de contention sur le compteur partagé.    | Réduction des conflits grâce aux Workers.     |
-
-Voici une version réorganisée et reformulée pour les parties **4. Analyse des performances** et **5. Mise en œuvre en mémoire distribuée**, avec des sous-sections légèrement réarrangées pour maintenir la cohérence.
-
----
 
 ## 4. Analyse des performances des implémentations **Pi** et **Assignment102** <a id="qualite-de-test-de-perf"></a>
 
@@ -375,8 +369,6 @@ Nous avons comparé les performances des deux implémentations **Pi.java** et **
 - **Scalabilité forte** : Évalue les performances lorsque le nombre de threads augmente, mais que la charge de travail (le nombre total de points, $(n_{\text{tot}})$ reste constant. Cette mesure permet d’analyser si les ressources multiprocesseurs disponibles sont efficacement exploitées.
 
 - **Scalabilité faible** : Analyse les performances lorsque la taille du problème augmente proportionnellement au nombre de threads. Cela montre la capacité du programme à maintenir des performances constantes malgré une charge de travail croissante.
-
----
 
 ### **4.2. Paramètres et méthodologie**
 
@@ -391,8 +383,6 @@ Nous avons comparé les performances des deux implémentations **Pi.java** et **
   - $(T_p)$ est le temps d’exécution avec $(p)$ threads.
 
 Un **speedup idéal** en scalabilité forte se manifeste par une courbe linéaire, où la vitesse double lorsque le nombre de threads double.
-
----
 
 ### **4.3. Automatisation et traitement des tests**
 
@@ -479,6 +469,105 @@ Le système combine deux niveaux de parallélisation :
 - **Diagramme des tâches (Master-Worker)** :  
   ![Diagramme des tâches Master-Worker]()
 
+## 7. Parallélisation sur plusieurs machines <a id="parallelisation-sur-plusieurs-machines"></a>
+
+Le calcul de Pi à l'aide de la méthode Monte Carlo a été mis en œuvre dans un environnement **distribué** en exploitant un cluster de machines fonctionnant sous **CentOS 9**. L'objectif était de répartir les calculs sur plusieurs machines interconnectées via un réseau, tout en assurant une communication efficace grâce à des sockets TCP.
+
+### 7.1. Configuration et préparation des machines
+
+#### 1. Installation des dépendances
+Avant de déployer le programme, chaque machine (master et workers) a été configurée pour exécuter du code Java. Cela inclut l'installation des outils de développement nécessaires :
+```bash
+sudo yum install java-devel
+```
+
+#### 2. Configuration du réseau
+Chaque machine a été assignée une **adresse IP unique** et un **port TCP dédié** pour assurer des communications fiables entre le master et les workers. Par exemple :
+- Le **worker 1** écoute sur `192.168.24.154:25545`.
+- Le **worker 2** écoute sur `192.168.24.150:25546`.
+
+Pour autoriser les connexions entrantes, nous avons ouvert les ports spécifiques via le pare-feu :
+```bash
+firewall-cmd --zone=public --add-port=25545/tcp
+firewall-cmd --zone=public --add-port=25546/tcp
+```
+
+#### 3. Gestion des adresses et ports dans le code
+Les adresses IP et les ports des machines sont codés dans un tableau, permettant au master de se connecter dynamiquement à chaque worker :
+```java
+static final String[] tab_ips = {
+    "192.168.24.154", "192.168.24.150", "192.168.0.103", "192.168.0.104"
+};
+static final int[] tab_ports = {25545, 25546, 25547, 25548};
+```
+
+Pour établir la connexion, le master utilise la méthode suivante :
+```java
+sockets[i] = new Socket(tab_ips[i], tab_ports[i]);
+```
+
+### 7.2. Compilation et déploiement
+
+#### Déploiement des fichiers Java
+Le code Java pour le master et les workers a été déployé sur leurs machines respectives à l'aide de **rsync** ou **scp**. Une fois transféré, le programme a été compilé localement sur chaque machine :
+```bash
+javac *.java
+```
+
+#### Lancement des workers
+Chaque machine worker est configurée pour écouter sur son port attribué, prête à recevoir des requêtes du master. Par exemple :
+```bash
+java WorkerSocket 25545
+```
+
+### 7.3. Exécution et coordination
+
+#### Étape 1 : Lancement du master
+Une fois les workers démarrés, le master est lancé. Il établit une connexion avec chaque worker en utilisant leurs adresses IP et ports. Ensuite, il envoie des requêtes pour effectuer les calculs Monte Carlo.
+
+#### Étape 2 : Calcul distribué
+Chaque worker reçoit une portion des calculs à effectuer (nombre de points Monte Carlo). Les résultats partiels sont envoyés au master dès qu'ils sont prêts.
+
+#### Étape 3 : Agrégation et sauvegarde des résultats
+Le master collecte les résultats de tous les workers, les combine pour calculer \( \pi \), et affiche les informations suivantes :
+- La valeur estimée de \( \pi \),
+- L'erreur relative,
+- Le nombre total de points traités,
+- Le temps d'exécution.
+
+Les résultats sont également sauvegardés dans un fichier CSV :
+```java
+saveResultsToCsv("results.csv", pi, difference, error, ntot, numWorkers, timeDuration);
+```
+
+Exemple d'entrée dans le fichier CSV :
+```csv
+PI,Difference,Error,Ntot,AvailableProcessors,TimeDuration(ms)
+3.141592,0.000001,0.000032,160000000,16,2350
+```
+
+### 7.4. Optimisation : Multiplication des workers
+
+Un avantage majeur de cette approche est la possibilité d'exploiter **tous les cœurs logiques** de chaque machine. Par exemple, si une machine dispose de **8 cœurs**, elle peut exécuter plusieurs instances de WorkerSocket pour maximiser les calculs parallèles localement. Cela permet de multiplier les workers sur une seule machine, augmentant ainsi la capacité de traitement tout en limitant le nombre de machines nécessaires.
+
+### 7.5. Avantages de cette architecture
+
+- **Scalabilité horizontale :** L'ajout de nouvelles machines dans le cluster permet de traiter un plus grand nombre de points Monte Carlo en parallèle.
+- **Répartition efficace :** Chaque machine effectue une partie distincte du calcul, ce qui réduit les risques de surcharge.
+- **Modularité :** La séparation entre le master et les workers permet d'adapter facilement le système à différentes configurations réseau.
+- **Optimisation locale :** Exploitation maximale des cœurs logiques sur chaque machine grâce à l'exécution parallèle de plusieurs workers.
+
+### 7.6. Illustration du fonctionnement
+
+#### Diagramme de l'architecture distribuée
+![Architecture distribuée](MasterSocketUml.png)
+
+#### Diagramme des tâches (Master-Worker)
+![Diagramme des tâches Master-Worker](DiagrammedestachesMASTERSocket.png)
+
+### Conclusion
+
+L'approche distribuée implémentée dans ce projet démontre une utilisation efficace des ressources réseau et matérielles pour effectuer des calculs Monte Carlo sur un cluster de machines. Grâce à l'architecture **Master-Worker** et à l'utilisation des sockets TCP, ce système est capable de traiter des charges importantes tout en restant flexible et évolutif.
 
 > **Liens de Navigation**
 >
