@@ -25,13 +25,13 @@ public class Assignment102 {
         System.out.println("\nPi: " + value);
         System.out.println("Difference to exact value of pi: " + (value - Math.PI));
         System.out.println("Error: " + (Math.abs((value - Math.PI)) / Math.PI) + "\n");
-        System.out.println("Ntot: " + i);
+        System.out.println("Ntot: " + i*nprocesseurs);
         System.out.println("Available processors: " + Runtime.getRuntime().availableProcessors());
         System.out.println("Time Duration (ms): " + (stopTime - startTime));
 
         // Créer un objet CsvWriter et enregistrer les résultats dans le fichier CSV
         CsvWriter writer = new CsvWriter(outputCsv);
-        writer.saveResults(value, value - Math.PI, (Math.abs((value - Math.PI)) / Math.PI), i, nprocesseurs, (stopTime - startTime));
+        writer.saveResults(value, value - Math.PI, (Math.abs((value - Math.PI)) / Math.PI), i*nprocesseurs, nprocesseurs, (stopTime - startTime));
     }
 }
 
