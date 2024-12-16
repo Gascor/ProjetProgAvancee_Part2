@@ -1,9 +1,10 @@
 import pandas as pd
-import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt# Assuming the CSV data is directly provided, let's simulate reading a CSV file by using your provided data string.
+from io import StringIO
 
 # Charger les données à partir d'un fichier CSV
-data_file = "assigment102.csv"  # Remplace par le chemin de ton fichier CSV
-df = pd.read_csv(data_file, delimiter=';', skipinitialspace=True)
+data_file = "assigment102_faible.csv"  # Remplace par le chemin de ton fichier CSV
+df = pd.read_csv(data_file, delimiter=',', decimal='.', skipinitialspace=True)
 
 # Remplacer les virgules par des points et convertir les colonnes en numériques
 df["PI"] = df["PI"].str.replace(',', '.').astype(float)
