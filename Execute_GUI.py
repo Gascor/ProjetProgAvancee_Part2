@@ -34,23 +34,24 @@ def gui():
         threads = [int(t) for t in thread_counts.get().split(',')]
         repeats = repeat_count.get()
         
+        """
         for points in points_list_strong:
             for thread in threads:
                 for _ in range(repeats):
                     points_per_thread = int(points / thread)
                     run_java_program(points_per_thread, thread, "results_pi_strong", "Pi")
-
+        """
         for points in points_list_strong:
             for thread in threads:
                 for _ in range(repeats):
-                    points_per_thread = int(points / thread)
-                    run_java_program(points_per_thread, thread, "results_assignment_strong", "Assignment102")
-        
+                    #points_per_thread = int(points / thread)
+                    run_java_program(points, thread, "results_assignment_strong", "Assignment102")
+        """
         for points in points_list_weak:
             for thread in threads:
                 for _ in range(repeats):
                     run_java_program(points, thread, "results_pi_weak", "Pi")
-
+        """
         for points in points_list_weak:
             for thread in threads:
                 for _ in range(repeats):

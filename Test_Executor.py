@@ -1,91 +1,63 @@
-import os
-import subprocess
-import csv
-from math import ceil
-import time
-from datetime import datetime
+import pandas as pd
+import matplotlib.pyplot as plt
 
-# Configuration des tests
-points_totaux = [1600000, 16000000, 160000000]  # Points totaux à tester
-workers = [1, 2, 4, 8, 16, 32, 64, 128]  # Nombre de workers
-Script_visee = "Assignment102"
-output_csv = f"temp_results_{Script_visee}.csv"  # Fichier CSV de sortie
+# Charger les données à partir d'un fichier CSV
+data_file = "Data/results_assignment_strong_G24.csv"  # Utilisez le chemin complet ici
+df = pd.read_csv(data_file, delimiter=';', decimal='.', skipinitialspace=True, header=0)
 
-# Commande Java (adapter si nécessaire)
-java_command = f"java -cp bin src.{Script_visee}"
+# Vérifier les premières lignes pour examiner les données
+print("Premières lignes du fichier :")
+print(df.head())
 
-# Préparer le fichier CSV de sortie
-with open(output_csv, mode="w", newline="") as csvfile:
-    writer = csv.writer(csvfile, delimiter=";")  # Utiliser ; comme séparateur
-    writer.writerow(["PI", "Difference", "Error", "Ntot", "AvailableProcessors", "TimeDuration(ms)"])
+# Vérifier les types de données après la lecture
+print("Types de colonnes après lecture :")
+print(df.dtypes)
 
-# Fonction pour extraire les résultats depuis la sortie Java
-def parse_java_output(output, points, workers):
-    try:
-        # Séparer la sortie en lignes
-        lines = output.splitlines()
-        # Vérifiez le nombre de lignes attendu pour éviter les erreurs
-        if len(lines) < 6:
-            raise ValueError(f"Sortie inattendue : pas assez de lignes.\nSortie complète :\n{output}")
+# Vérifier les valeurs uniques de AvailableProcessors
+print("Valeurs uniques de AvailableProcessors :")
+print(df["AvailableProcessors"].unique())
 
-        # Extraire les valeurs nécessaires avec une validation
-        pi_line = lines[0]
-        diff_line = lines[1]
-        error_line = lines[2]
-        ntot_line = f"Ntot: {points * workers}"
-        available_processors = f"Available processors: {workers}"
-        time_line = lines[5]
+# Créer un graphique combiné
+plt.figure(figsize=(10, 6))
 
-        if "Pi:" not in pi_line or "Difference" not in diff_line or "Error" not in error_line or "Time Duration" not in time_line:
-            raise ValueError(f"Format inattendu dans la sortie Java.\nSortie complète :\n{output}")
+# Groupement par nombre de processeurs
+grouped = df.groupby('AvailableProcessors')
 
-        pi = float(pi_line.split(":")[1].strip())
-        difference = float(diff_line.split(":")[1].strip())
-        error = float(error_line.split(":")[1].strip())
-        ntot = points * workers
-        execution_time = int(time_line.split(":")[1].strip())
+# Tracer la moyenne du Speed-up pour chaque nombre de processeurs
+speedup_means = []
+processor_counts = []
 
-        return pi, difference, error, ntot, workers, execution_time
+for name, group in grouped:
+    subset_1_processor = df[df['AvailableProcessors'] == 1]
+    if not subset_1_processor.empty:
+        time_on_1_processor = subset_1_processor["TimeDuration(ms)"].mean()
+        average_time = group["TimeDuration(ms)"].mean()
+        speedup = time_on_1_processor / average_time
+        speedup_means.append(speedup)
+        processor_counts.append(name)
 
-    except Exception as e:
-        # Afficher une erreur claire et détaillée si l'analyse échoue
-        print(f"Erreur lors de l'analyse de la sortie Java : {e}")
-        print(f"Sortie complète :\n{output}")
-        return None, None, None, None, None, None
+plt.plot(processor_counts, speedup_means, marker="o", linestyle='-', label="Moyenne du Speed-up")
+plt.plot(processor_counts, processor_counts, linestyle="--", color="red", label="Speed-up idéal")
 
 
-# Exécuter les tests
-for points in points_totaux:
-    for num_workers in workers:
-        for i in range(10):  # Boucle pour répéter 10 fois chaque test
-            points_per_worker = ceil(points / num_workers)
-            command = f"{java_command} {points_per_worker} {num_workers} {output_csv}"
+# Ajuster les limites des axes
+plt.xlim(0.8, max(processor_counts) * 2)  # Élargissement de l'axe des X
+plt.ylim(min(speedup_means) * 0.8, 80)  # Augmenter la limite supérieure pour mieux centrer la ligne rouge
 
-            print(f"Exécution : {command}")
-            try:
-                # Lancer le programme Java avec un timeout
-                result = subprocess.run(command, shell=True, capture_output=True, text=True, timeout=120)
 
-                # Afficher les sorties pour debug
-                print("Sortie standard :")
-                print(result.stdout)
-                print("Erreur standard :")
-                print(result.stderr)
+# Configurer le graphique combiné
+plt.title("""Moyenne du Graphique de Scalabilité Forte (Speed-up) | Calculs sur Assignment102.java
+(Sur Ordinateur Salle G24 cf: Rapport section Architecture materielles)""")
+plt.xlabel("Nombre de processeurs")
+plt.ylabel("Moyenne du Speed-up")
+plt.xscale("log", base=2)
+plt.yscale("log", base=2)
+plt.grid(True, which="both", linestyle="--", linewidth=0.5)
+plt.legend()
 
-                # Analyser la sortie standard pour extraire les résultats
-                pi, difference, error, ntot, available_processors, execution_time = parse_java_output(
-                    result.stdout, points, num_workers
-                )
+# Sauvegarder le graphique
+combined_output_file = "doc/Docs/pi_scalabilite_forte_moyenne_speedup.png"  # Utilisez le chemin complet ici
+plt.savefig(combined_output_file, dpi=300)
 
-                # Vérifiez si les données ont été extraites correctement
-                if pi is not None:
-                    with open(output_csv, mode="a", newline="") as csvfile:
-                        writer = csv.writer(csvfile, delimiter=";")  # Utiliser ; comme séparateur
-                        writer.writerow([pi, difference, error, ntot, available_processors, execution_time])
-
-            except subprocess.TimeoutExpired:
-                print(f"Le processus a dépassé le temps limite (timeout) pour la commande : {command}")
-            except Exception as e:
-                print(f"Erreur inattendue : {e}")
-
-print(f"Tests terminés. Résultats sauvegardés dans {output_csv}.")
+# Afficher le graphique (facultatif en mode batch)
+# plt.show()
