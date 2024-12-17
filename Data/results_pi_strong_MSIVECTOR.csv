@@ -1,4 +1,4 @@
-PI,Difference,Error,Ntot,AvailableProcessors,TimeDuration(ms)
+PI;Difference;Error;Ntot;AvailableProcessors;TimeDuration(ms);
 3.139515;-0.002078;0.000661;1600000;1;49;
 3.142000;0.000407;0.000130;1600000;1;49;
 3.140780;-0.000813;0.000259;1600000;1;50;
