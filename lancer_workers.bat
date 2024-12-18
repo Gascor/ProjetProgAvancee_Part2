@@ -17,7 +17,7 @@ set BASE_PORT=25545
 for /L %%i in (0,1,%N%) do (
     set /A PORT=!BASE_PORT! + %%i
     echo Lancement du WorkerSocket sur le port !PORT!...
-    start cmd /k "java -XX:ActiveProcessorCount=32 -XX:+UseNUMA -XX:+UseParallelGC -XX:ParallelGCThreads=32 -cp bin src.WorkerSocket_old !PORT!"
+    start cmd /k "java -XX:ActiveProcessorCount=32 -XX:+UseNUMA -XX:+UseParallelGC -XX:ParallelGCThreads=32 -cp bin src.WorkerSocket !PORT!"
 )
 
 :: Fin

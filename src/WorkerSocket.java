@@ -19,8 +19,8 @@ public class WorkerSocket {
      * @param totalThrows Nombre total de lancers
      * @return Nombre de points dans le quart de disque
      */
-    private static int computeMonteCarlo(int totalThrows) {
-        int countInside = 0;
+    private static long computeMonteCarlo(int totalThrows) {
+        long countInside = 0;
         for (int i = 0; i < totalThrows; i++) {
             double x = Math.random(); // Coordonnée x aléatoire entre 0 et 1
             double y = Math.random(); // Coordonnée y aléatoire entre 0 et 1
@@ -60,9 +60,9 @@ public class WorkerSocket {
                 System.out.println("Reçu de Master : totalCount = " + str);
 
                 // Calculer Monte Carlo
-                int totalThrows = Integer.parseInt(str);
+                long totalThrows = Long.parseLong(str);
                 //int totalInside = computeMonteCarlo(totalThrows);
-                int totalInside = (int) new Master().doRun(totalThrows, 1,"");
+                long totalInside = (long) new Master().doRun(totalThrows, 1,"");
 
                 // Envoyer le résultat au Master
                 System.out.println("Envoi au Master : totalInside = " + totalInside);

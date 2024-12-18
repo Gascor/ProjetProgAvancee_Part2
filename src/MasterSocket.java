@@ -16,11 +16,11 @@ public class MasterSocket {
 	static Socket[] sockets = new Socket[MAXSERVER];
 
 	public static void main(String[] args) throws Exception {
-		long totalCount = 50000; // total number of throws on a Worker
-		int total = 0; // total number of throws inside quarter of disk
+		long totalCount = 800000; // total number of throws on a Worker
+		long total = 0; // total number of throws inside quarter of disk
 		double pi;
 
-		int numWorkers = 32;
+		int numWorkers = 2;
 		BufferedReader bufferRead = new BufferedReader(new InputStreamReader(System.in));
 		String s;
 
