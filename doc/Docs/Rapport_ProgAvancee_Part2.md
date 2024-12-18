@@ -796,7 +796,7 @@ Un avantage majeur de cette approche est la possibilité d'exploiter **tous les 
 ### 7.6. Illustration du fonctionnement
 
 #### Diagramme de l'architecture distribuée
-![Architecture distribuée](MasterSocket_Conception_V1_.png)
+![Architecture distribuée](doc/Conception/MasterSocket_Conception_V1_.png)
 
 #### Diagramme des tâches (Master-Worker)
 ![Diagramme des tâches Master-Worker](DiagrammedestachesMASTERSocket.png)
@@ -807,7 +807,7 @@ Un avantage majeur de cette approche est la possibilité d'exploiter **tous les 
 
 L'analyse des erreurs dans l'estimation de Pi en fonction du nombre d'itérations joue un rôle crucial pour comprendre la précision et l'efficacité des scripts utilisés dans nos expérimentations. Le graphique ci-dessous illustre la performance de trois algorithmes distincts - Assignment, Pi Calculation, et Master Worker Partagé - en mesurant les erreurs par rapport au nombre total d'itérations.
 
-![Comparaison de l'Erreur entre Trois Algorithmes sur MSI VECTOR](attachment://image.png)
+![Comparaison de l'Erreur entre Trois Algorithmes sur MSI VECTOR](comparison_median_mean_error_by_algorithm_extended)
 
 ### **8.1. Interprétation des Résultats**
 
