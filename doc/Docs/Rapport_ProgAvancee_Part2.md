@@ -29,6 +29,7 @@ Note Importante : Ce rapport à été reformulé plus clairement à l'aide de Ch
   - [5.1. Java Socket MW](#java-socket-mw)
 - [6. Perf MW](#perf-mw)
 - [7. Parallélisation sur plusieurs machines](#parallelisation-sur-plusieurs-machines)
+- [8. Erreurs sur le nombre Pi par scripts et itérations.](#parallelisation-sur-plusieurs-machines)
 - [9. Conclusion](#conclusion)
 
 ---
@@ -255,19 +256,27 @@ FIN PROCÉDURE
 | **Avantages**           | Simplicité et scalabilité directe             | Bonne gestion des ressources et modularité    |
 | **Inconvénients**       | Synchronisation complexe pour de grands \( n \) | Augmentation de la latence avec de nombreux **Workers** |
 
+<br>
+
 ## 3. Mise en œuvre sur Machine Partagée <a id="mise-en-oeuvre-sur-machine-partage"></a>
 
 La méthode Monte Carlo a été implémentée sur une architecture à mémoire partagée en utilisant des outils avancés de gestion des threads. Les programmes **Assignment102** et **Pi.java** illustrent deux approches complémentaires pour effectuer ce calcul parallèle.
 
+<br>
+
 ### **3.1. Analyse de Assignment102** <a id="analyse-assignment-102"></a>
 
 L'implémentation de **Assignment102** repose sur l'utilisation des threads pour répartir les calculs Monte Carlo de manière efficace.
+
+<br>
 
 #### **3.1.1. Classes principales**
 
 - **`Assignment102`** : C'est le point d'entrée du programme. Il initialise les paramètres, configure un pool de threads, et soumet les tâches de calcul Monte Carlo au pool.
 - **`PiMonteCarlo`** : Chaque instance représente une tâche indépendante qui effectue des tirages aléatoires et met à jour un compteur partagé.
 - **`MonteCarlo`** : Cette classe encapsule la logique pour générer des points aléatoires et vérifier leur appartenance au quart de cercle.
+
+<br>
 
 #### **3.1.2. Utilisation du package `Concurrent`**
 
@@ -298,11 +307,15 @@ Le programme s'appuie sur le package Java `java.util.concurrent` pour gérer eff
 - Utilisé pour synchroniser l'accès au compteur partagé, évitant les conflits lors de l'incrémentation.  
 - La méthode **`incrementAndGet()`** garantit une opération atomique et sécurisée.
 
+<br>
+
 #### **3.1.3. Paradigme choisi**
 
 - **Modèle utilisé :** Itérations parallèles.  
 Chaque tâche représente une itération Monte Carlo indépendante, soumise à un pool de threads.  
 - **Programmation sur mémoire partagée :** Les threads partagent un espace mémoire global.
+
+<br>
 
 #### **3.1.4. Gestion des tâches dans Assignment102**
 
@@ -319,6 +332,8 @@ Chaque tâche représente une itération Monte Carlo indépendante, soumise à u
 4. **Agrégation des résultats :**
    - Une fois toutes les tâches terminées, les résultats sont collectés et combinés pour calculer $( \pi )$.
 
+<br>
+
 #### **3.1.5. Optimisations possibles**
 
 1. **Compteurs locaux :**  
@@ -326,15 +341,21 @@ Chaque tâche représente une itération Monte Carlo indépendante, soumise à u
 2. **Comptage inversé :**  
    Compter les points en dehors du cercle pour limiter les mises à jour atomiques, réduisant ainsi la contention.
 
+<br>
+
 ### **3.2. Analyse de Pi.java** <a id="analyse-pijava"></a>
 
 **Pi.java** implémente la méthode Monte Carlo en utilisant le paradigme Master-Worker. Il exploite un pool de threads fixe pour paralléliser les calculs.
+
+<br>
 
 #### **3.2.1. Classes principales**
 
 - **`Pi`** : Contient la méthode `main()`. Elle initialise les paramètres, configure le pool de threads, et appelle la méthode `doRun()` de la classe Master.
 - **`Master`** : Gère la distribution des tâches de calcul parmi les **Workers**. Elle coordonne l'exécution parallèle et collecte les résultats.
 - **`Worker`** : Chaque Worker est une tâche indépendante (implémentée avec l'interface `Callable<Long>`). Elle effectue une partie du calcul et retourne le nombre de points appartenant au quart de cercle.
+
+<br>
 
 #### **3.2.2. Utilisation des outils `Concurrent`**
 
@@ -349,6 +370,8 @@ Chaque tâche représente une itération Monte Carlo indépendante, soumise à u
 
 ##### ● **`Callable`**
 - Interface permettant aux Workers de retourner un résultat (contrairement à `Runnable`).
+
+<br>
 
 #### **3.2.3. Paradigme choisi**
 
@@ -366,6 +389,8 @@ Le Master distribue $( n_{\text{tot}} )$ points entre plusieurs Workers, puis r�
 4. **Calcul final :**
    - Le Master agrège les résultats pour calculer $( \pi )$.
 
+<br>
+
 #### **3.2.5. Comparaison entre **Assignment102** et Pi.java**
 
 | Critère             | Assignment102                                  | Pi.java                                         |
@@ -374,9 +399,13 @@ Le Master distribue $( n_{\text{tot}} )$ points entre plusieurs Workers, puis r�
 | **Parallélisme**    | Les threads partagent une ressource critique.  | Meilleure indépendance des tâches (Workers).  |
 | **Efficacité**      | Plus de contention sur le compteur partagé.    | Réduction des conflits grâce aux Workers.     |
 
+<br>
+
 ## 4. Analyse des performances des implémentations **Pi** et **Assignment102** <a id="qualite-de-test-de-perf"></a>
 
 Nous avons comparé les performances des deux implémentations **Pi.java** et **Assignment102** à travers deux métriques fondamentales : la **scalabilité forte** et la **scalabilité faible**.
+
+<br>
 
 ### **4.1. Définitions des métriques**
 
@@ -384,10 +413,12 @@ Nous avons comparé les performances des deux implémentations **Pi.java** et **
 
 - **Scalabilité faible** : Analyse les performances lorsque la taille du problème augmente proportionnellement au nombre de threads. Cela montre la capacité du programme à maintenir des performances constantes malgré une charge de travail croissante.
 
+<br>
+
 ### **4.2. Paramètres et méthodologie**
 
 - **Nombre de points $(n_{\text{tot}})$ :** $(10^5)$, $(10^6)$, et $(10^7 \times 16)$. Ces tailles permettent une granularité suffisante pour observer les différences de performances.
-- **Nombre de threads :** $(1)$, $(2)$, $(4)$, $(8)$, $(16)$.
+- **Nombre de threads :** $(1)$, $(2)$, $(4)$, $(8)$, $(16)$, $(32)$, $(64)$.
 - **Métrique clé : Speedup $(S)$** :
   $$
   S = \frac{T_1}{T_p}
@@ -398,41 +429,166 @@ Nous avons comparé les performances des deux implémentations **Pi.java** et **
 
 Un **speedup idéal** en scalabilité forte se manifeste par une courbe linéaire, où la vitesse double lorsque le nombre de threads double.
 
+<br>
+
 ### **4.3. Automatisation et traitement des tests**
 
 #### Scripts d'exécution :
 
-1. **`script_scalabilite_forte.bat`** :  
-   Maintient $(n_{\text{tot}})$ constant tout en augmentant le nombre de threads. Les résultats sont enregistrés dans des fichiers CSV spécifiques à chaque programme.
+1. **`Execute.py`** :  
+   Permet d'executer l'ensemble ou partiellement des batch de test de performance en ligne de commande.
 
-2. **`script_scalabilite_faible.bat`** :  
-   Augmente $(n_{\text{tot}})$ proportionnellement au nombre de threads pour simuler une charge croissante.
+2. **`Execute_GUI.py`** :  
+   Permet d'executer l'ensemble ou partiellement des batch de test de performance via une interface graphique Tkinter.
 
 #### Traitement des résultats :
 
-- **Moyennes des exécutions :** Chaque configuration a été répétée $(5)$ fois pour obtenir des résultats fiables. La classe **`PiAverageToCsv`** calcule la moyenne des résultats pour chaque test.
-- **Analyse des speedups :** Un script Python extrait les données CSV, calcule les speedups et génère des graphes pour visualiser la scalabilité forte et faible.
+- **Moyennes des exécutions :** Chaque configuration a été répétée $(5)$ fois pour obtenir des résultats fiables qui nous permettrons de tracer la moyenne ou une mediane de chaque executions.
+- **Analyse des speedups :** Un script Python extrait les données CSV, calcule les speedups et génère des graphes pour visualiser la scalabilité forte et faible ainsi que leur taux d'erreur.
 
-### **4.4. Résultats expérimentaux** (DATA A METTRE VENDREDI MATIN)
+<br>
 
-#### Scalabilité forte (Assignment102) :
+### **4.4. Résultats expérimentaux**
 
-| PI        | Différence   | Erreur       | $(n_{\text{tot}})$   | Threads         | Durée (ms)       |
-|-----------|--------------|--------------|----------------------|-----------------|------------------|
-| 3.141701  | 0.000108     | 0.000363     | $(16 \times 10^6)$   | 1               | 265.6            |
-| 3.142529  | 0.000936     | 0.000433     | $(16 \times 10^6)$   | 2               | 497.6            |
-| 3.142360  | 0.000767     | 0.000411     | $(16 \times 10^6)$   | 4               | 798.0            |
-| ...       | ...          | ...          | ...                  | ...             | ...              |
+#### Scalabilité forte (Assignment102.java) en Salle G24 :
 
-#### Scalabilité forte (Pi.java) :
+|   AvailableProcessors |      PI |   Difference |     Error |    Ntot |   TimeDuration(ms) |
+|----------------------:|--------:|-------------:|----------:|--------:|-------------------:|
+|                     1 | 3.14116 |   -0.0004326 | 0.0002958 | 1.6e+06 |               63.2 |
+|                     2 | 3.14176 |    0.0001656 | 0.0002068 | 1.6e+06 |              168.8 |
+|                     4 | 3.14011 |   -0.0014836 | 0.0004722 | 1.6e+06 |              199.8 |
+|                     8 | 3.14083 |   -0.0007676 | 0.0004008 | 1.6e+06 |              286.2 |
+|                    16 | 3.14133 |   -0.0002612 | 0.0003756 | 1.6e+06 |              286   |
+|                    32 | 3.14152 |   -7.54e-05  | 0.0003622 | 1.6e+06 |              320.2 |
+|                     1 | 3.14194 |    0.0003496 | 0.0001112 | 1.6e+07 |              527.8 |
+|                     2 | 3.14154 |   -5.24e-05  | 0.0001424 | 1.6e+07 |             1329   |
+|                     4 | 3.14168 |    8.7e-05   | 3.38e-05  | 1.6e+07 |             1539.2 |
+|                     8 | 3.14136 |   -0.0002286 | 0.0001294 | 1.6e+07 |             1742.4 |
+|                    16 | 3.14185 |    0.0002548 | 0.0001466 | 1.6e+07 |             2139.4 |
+|                    32 | 3.14146 |   -0.0001332 | 0.0001062 | 1.6e+07 |             3367.6 |
+|                     1 | 3.14162 |    2.6e-05   | 3.08e-05 | 1.6e+08 |             5045.8 |
+|                     2 | 3.14151 |   -8.66e-05  | 5.24e-05 | 1.6e+08 |            12260.8 |
+|                     4 | 3.14156 |   -3.3e-05   | 4.1e-05  | 1.6e+08 |            15864.6 |
+|                     8 | 3.14172 |    0.0001318 | 4.2e-05  | 1.6e+08 |            16794   |
+|                    16 | 3.1416  |    8.4e-06   | 1.14e-05 | 1.6e+08 |            29878   |
+|                    32 | 3.14161 |    1.24e-05  | 5.06e-05 | 1.6e+08 |            29752   |
 
-| PI        | Différence   | Erreur       | $(n_{\text{tot}})$   | Threads         | Durée (ms)       |
-|-----------|--------------|--------------|----------------------|-----------------|------------------|
-| 3.141830  | 0.000237     | 0.000124     | $(16 \times 10^6)$   | 1               | 115.4            |
-| 3.141716  | 0.000123     | 0.000269     | $(16 \times 10^6)$   | 2               | 73.6             |
-| ...       | ...          | ...          | ...                  | ...             | ...              |
+
+#### Scalabilité forte (Assignment102.java) sur machine personnelle (MSI VECTOR) :
+
+|   AvailableProcessors |      PI |   Difference |     Error |    Ntot |   TimeDuration(ms) |
+|----------------------:|--------:|-------------:|----------:|--------:|-------------------:|
+|                     1 | 3.14116 |   -0.0004326 | 0.0002958 | 1.6e+06 |               62.8 |
+|                     2 | 3.14176 |    0.0001656 | 0.0002068 | 1.6e+06 |              150.8 |
+|                     4 | 3.14011 |   -0.0014836 | 0.0004722 | 1.6e+06 |              183.8 |
+|                     8 | 3.14083 |   -0.0007676 | 0.0004008 | 1.6e+06 |              272.2 |
+|                    16 | 3.14133 |   -0.0002612 | 0.0003756 | 1.6e+06 |              284   |
+|                    32 | 3.14152 |   -7.54e-05  | 0.0003622 | 1.6e+06 |              314.2 |
+|                    64 | 3.14114 |   -0.0004544 | 0.0005198 | 1.6e+06 |              348.8 |
+|                     1 | 3.14194 |    0.0003496 | 0.0001112 | 1.6e+07 |              497.8 |
+|                     2 | 3.14154 |   -5.24e-05  | 0.0001424 | 1.6e+07 |             1189   |
+|                     4 | 3.14168 |    8.7e-05   | 3.38e-05  | 1.6e+07 |             1359.2 |
+|                     8 | 3.14136 |   -0.0002286 | 0.0001294 | 1.6e+07 |             1682.4 |
+|                    16 | 3.14185 |    0.0002548 | 0.0001466 | 1.6e+07 |             2019.4 |
+|                    32 | 3.14146 |   -0.0001332 | 0.0001062 | 1.6e+07 |             3267.6 |
+|                    64 | 3.14166 |    6.76e-05  | 9.28e-05  | 1.6e+07 |             3245.8 |
+|                     1 | 3.14162 |    2.6e-05   | 3.08e-05 | 1.6e+08 |             4865.8 |
+|                     2 | 3.14151 |   -8.66e-05  | 5.24e-05 | 1.6e+08 |            11860.8 |
+|                     4 | 3.14156 |   -3.3e-05   | 4.1e-05  | 1.6e+08 |            15664.6 |
+|                     8 | 3.14172 |    0.0001318 | 4.2e-05  | 1.6e+08 |            15394   |
+|                    16 | 3.1416  |    8.4e-06   | 1.14e-05 | 1.6e+08 |            28078   |
+|                    32 | 3.14161 |    1.24e-05  | 5.06e-05 | 1.6e+08 |            27952   |
+|                    64 | 3.14165 |    6.16e-05  | 4.22e-05 | 1.6e+08 |            29559.4 |
+
+
+#### Scalabilité forte (Pi.java) en Salle G24 :
+
+|   AvailableProcessors |      PI |   Difference |     Error |    Ntot |   TimeDuration(ms) |
+|----------------------:|--------:|-------------:|----------:|--------:|-------------------:|
+|                     1 | 3.14189 |    0.000298  | 0.0003134 | 1.6e+06 |               69.4 |
+|                     2 | 3.1421  |    0.0005078 | 0.0003128 | 1.6e+06 |               47.8 |
+|                     4 | 3.14172 |    0.0001268 | 0.0004846 | 1.6e+06 |               40   |
+|                     8 | 3.14196 |    0.0003718 | 0.0002916 | 1.6e+06 |               53.4 |
+|                    16 | 3.14236 |    0.0007676 | 0.000408  | 1.6e+06 |               74.2 |
+|                    32 | 3.14159 |   -2e-07     | 0.0003108 | 1.6e+06 |              130   |
+|                     1 | 3.14154 |   -5.76e-05  | 0.0001384 | 1.6e+07 |              545.6 |
+|                     2 | 3.14155 |   -4.1e-05   | 5.96e-05  | 1.6e+07 |              301.4 |
+|                     4 | 3.14147 |   -0.0001212 | 8.02e-05  | 1.6e+07 |              182   |
+|                     8 | 3.14166 |    6.42e-05  | 3.96e-05  | 1.6e+07 |              136.4 |
+|                    16 | 3.14148 |   -0.0001126 | 0.0001042 | 1.6e+07 |              115.8 |
+|                    32 | 3.14149 |   -9.8e-05   | 0.0001112 | 1.6e+07 |              160.4 |
+|                     1 | 3.14153 |    -6.26e-05 | 1.98e-05 | 1.6e+08 |             5306.4 |
+|                     2 | 3.14156 |    -3.68e-05 | 2.88e-05 | 1.6e+08 |             2750.2 |
+|                     4 | 3.14164 |     5.04e-05 | 2.68e-05 | 1.6e+08 |             1665.6 |
+|                     8 | 3.14152 |    -6.88e-05 | 3.68e-05 | 1.6e+08 |             1071   |
+|                    16 | 3.14169 |     9.64e-05 | 3.08e-05 | 1.6e+08 |              815.4 |
+|                    32 | 3.14164 |     4.34e-05 | 4.26e-05 | 1.6e+08 |              713.4 |
+
+
+#### Scalabilité forte (Pi) sur machine personnelle (MSI VECTOR) :
+
+|   AvailableProcessors |      PI |   Difference |     Error |    Ntot |   TimeDuration(ms) |
+|----------------------:|--------:|-------------:|----------:|--------:|-------------------:|
+|                     1 | 3.14092 |   -0.000669  | 0.0003744 | 1.6e+06 |               49.7 |
+|                     2 | 3.14122 |   -0.0003752 | 0.0002657 | 1.6e+06 |               34.8 |
+|                     4 | 3.14193 |    0.000341  | 0.0003862 | 1.6e+06 |               27.5 |
+|                     8 | 3.14123 |   -0.0003585 | 0.0003411 | 1.6e+06 |               40.6 |
+|                    16 | 3.14137 |   -0.0002272 | 0.0004115 | 1.6e+06 |               58.2 |
+|                    32 | 3.14128 |   -0.0003174 | 0.000346  | 1.6e+06 |               86.4 |
+|                    64 | 3.14198 |    0.0003916 | 0.0002352 | 1.6e+06 |               94.1 |
+|                     1 | 3.14158 |   -1.12e-05  | 0.0001001 | 1.6e+07 |              453.2 |
+|                     2 | 3.14159 |   -2.8e-06   | 7.14e-05  | 1.6e+07 |              239.1 |
+|                     4 | 3.14161 |    1.88e-05  | 7.43e-05  | 1.6e+07 |              130.8 |
+|                     8 | 3.1417  |    0.0001116 | 8.33e-05  | 1.6e+07 |               82.3 |
+|                    16 | 3.14176 |    0.0001641 | 0.0001123 | 1.6e+07 |               68.7 |
+|                    32 | 3.14162 |    2.88e-05  | 4.7e-05   | 1.6e+07 |               97.8 |
+|                    64 | 3.14163 |    3.24e-05  | 0.00012   | 1.6e+07 |              131.1 |
+|                     1 | 3.14156 |    -3.46e-05 | 3.78e-05 | 1.6e+08 |             4485.6 |
+|                     2 | 3.14155 |    -4.75e-05 | 3.24e-05 | 1.6e+08 |             2272.3 |
+|                     4 | 3.1415  |    -9.08e-05 | 4.46e-05 | 1.6e+08 |             1158.1 |
+|                     8 | 3.14158 |    -1.18e-05 | 2.82e-05 | 1.6e+08 |              608.2 |
+|                    16 | 3.14162 |     2.97e-05 | 4.19e-05 | 1.6e+08 |              345   |
+|                    32 | 3.14154 |    -5.72e-05 | 3.27e-05 | 1.6e+08 |              257.9 |
+|                    64 | 3.14159 |    -5.8e-06  | 2.55e-05 | 1.6e+08 |              311.1 |
+|                     1 | 3.14159 |     1.8e-06  | 1.34e-05 | 1.6e+09 |            44445.4 |
+|                     2 | 3.14161 |     1.62e-05 | 1.04e-05 | 1.6e+09 |            22746   |
+|                     4 | 3.14156 |    -2.84e-05 | 1.26e-05 | 1.6e+09 |            11403.6 |
+|                     8 | 3.14162 |     2.88e-05 | 9.6e-06  | 1.6e+09 |             5791.6 |
+|                    16 | 3.1416  |     9e-06    | 5e-06    | 1.6e+09 |             3205   |
+|                    32 | 3.14161 |     2.14e-05 | 1.14e-05 | 1.6e+09 |             2185   |
+|                    64 | 3.1416  |     4e-06    | 1.02e-05 | 1.6e+09 |             2206.4 |
+
+<br>
 
 ### **4.5. Observations**
+
+- **Graphiques de Scalabilité Forte respectivement de Pi.java et Assignment102.java** :
+
+  - **Pi.java Sur l'environnement en G24** :
+    ![Diagramme Pi.java Sur l'environnement en G24](./graph/pi_strong_mean_speedup_G24.png)
+
+  - **Pi.java Sur l'environnement personnel (MSI VECTOR)** :
+    ![Diagramme Pi.java Sur l'environnement personnel (MSI VECTOR)](./graph/pi_strong_mean_speedup_MSIVECTOR.png)
+
+  - **Assignment102.java Sur l'environnement en G24** :
+    ![Diagramme Assignment102.java Sur l'environnement en G24](./graph/assignment102_strong_mean_speedup_G24.png)
+    
+  - **Assignment102.java Sur l'environnement personnel (MSI VECTOR)** :
+    ![Assignment102.java Sur l'environnement personnel (MSI VECTOR)](./graph/assignment102_strong_mean_speedup_MSIVECTOR.png)
+  
+- **Graphiques de Scalabilité Faible respectivement de Pi.java et Assignment102.java** :
+
+  - **Pi.java Sur l'environnement en G24** :
+    ![Diagramme Pi.java Sur l'environnement en G24](./graph/pi_weak_mean_speedup_G24.png)
+
+  - **Pi.java Sur l'environnement personnel (MSI VECTOR)** :
+    ![Diagramme Pi.java Sur l'environnement personnel (MSI VECTOR)](./graph/pi_weak_mean_speedup_MSIVECTOR.png)
+
+  - **Assignment102.java Sur l'environnement en G24** :
+    ![Diagramme Assignment102.java Sur l'environnement en G24](./graph/assignment102_weak_mean_speedup_G24.png)
+    
+  - **Assignment102.java Sur l'environnement personnel (MSI VECTOR)** :
+    ![Assignment102.java Sur l'environnement personnel (MSI VECTOR)](./graph/assignment102_weak_mean_speedup_MSIVECTOR.png)
 
 - **Assignment102** :
   - La scalabilité est limitée par le compteur partagé $(n_{\text{cible}})$, qui devient un goulot d’étranglement.
@@ -440,6 +596,8 @@ Un **speedup idéal** en scalabilité forte se manifeste par une courbe linéair
 
 - **Pi.java** :
   - Grâce au modèle Master-Worker, les Workers fonctionnent indépendamment. Cela réduit les conflits et améliore les performances, notamment pour les charges de travail importantes.
+
+<br>
 
 ## 5. Mise en œuvre de Monte Carlo en mémoire distribuée <a id="mise-en-oeuvre-en-memoire-distribuee"></a>
 
@@ -460,11 +618,15 @@ L’approche distribuée repose sur le modèle **Master-Worker**, où :
 3. **Communication via Sockets** :  
    - Les échanges sont réalisés avec des flux (BufferedReader et PrintWriter) pour assurer une communication fiable entre le Master et les Workers.
 
+<br>
+
 ### **5.2. Paradigme utilisé**
 
 Le système combine deux niveaux de parallélisation :
 - **Programmation distribuée** : Le calcul est réparti sur plusieurs machines via des sockets.
 - **Programmation parallèle locale** : Chaque Worker exécute ses calculs en parallèle sur ses propres cœurs.
+
+<br>
 
 ### **5.3. Comparaison avec les implémentations précédentes**
 
@@ -474,20 +636,70 @@ Le système combine deux niveaux de parallélisation :
 | **Performance**       | Limité par les conflits de synchronisation. | Évolutif (scalabilité horizontale). |
 | **Utilisation des ressources** | Uniquement sur une machine. | Exploite plusieurs machines. |
 
+<br>
+
 ### **5.4. Illustration de l'architecture**
 
 #### Diagrammes
 - **Schéma de Monte Carlo Distribué** :  
-  ![Architecture distribuée]()
+  ![Architecture distribuée](../Conception/)
 
 - **Diagramme des tâches (Master-Worker)** :  
-  ![Diagramme des tâches Master-Worker]()
+  ![Diagramme des tâches Master-Worker](../Conception/Diagrammedestaches.png)
 
-## 7. Parallélisation sur plusieurs machines <a id="parallelisation-sur-plusieurs-machines"></a>
+<br>
+
+### **5.5. Observations** :
+
+- **Graphiques de Scalabilité Forte et Faible respectivement dans un environnement local sur une seule Machine** :
+
+  - **MasterWorker Scalabilité Forte sur l'environnement personnel (MSI VECTOR)** :
+  ![Architecture distribuée](./graph/mw-local_strong_mean_speedup_MSIVECTOR.png)
+
+  - **MasterWorker Scalabilité Faible sur l'environnement personnel (MSI VECTOR)** :
+  ![Architecture distribuée](./graph/mw-local_weak_mean_speedup_MSIVECTOR.png)
+
+<br>
+
+## 6. Analyse de performance sur Master Worker en local <a id="analyse-master-workers-en-local"></a>
 
 Le calcul de Pi à l'aide de la méthode Monte Carlo a été mis en œuvre dans un environnement **distribué** en exploitant un cluster de machines fonctionnant sous **CentOS 9**. L'objectif était de répartir les calculs sur plusieurs machines interconnectées via un réseau, tout en assurant une communication efficace grâce à des sockets TCP.
 
-### 7.1. Configuration et préparation des machines
+<br>
+
+### **6.1. Analyse des Performances du Master Worker en Mémoire Partagée Locale**
+
+Nous allons examiner les performances du Master Worker en mémoire partagée locale sur un ordinateur portable personnel, à l'aide des graphiques de scalabilité forte et faible.
+
+#### Scalabilité Forte
+
+![Scalabilité Forte Master Worker en Local](./graph/mw-local_strong_mean_speedup_MSIVECTOR.png)
+
+**Observations** :
+- La courbe montre que le speed-up se rapproche d'une croissance linéaire jusqu'à un certain nombre de processeurs, mais plafonne ensuite.
+- Le speed-up idéal, représenté par la ligne rouge pointillée, indique une augmentation proportionnelle du speed-up avec le nombre de processeurs. Cependant, le speed-up réel commence à s'aplatir après 16 processeurs.
+- Cette tendance pourrait indiquer que bien que le système puisse efficacement distribuer le travail entre plusieurs cœurs, il y a des limites liées à la coordination et la communication entre les threads, mais également ont peut souligner la limitation du matériel étant selon la section architecture materielle du rapport, la configuration du MSI Vector est de 24 coeurs physiques et 32 coeurs logique.
+
+#### Scalabilité Faible
+
+![Scalabilité Faible Master Worker en Local](./graph/mw-local_weak_mean_speedup_MSIVECTOR.png)
+
+**Observations** :
+- Le speed-up dans le cas de scalabilité faible montre une décroissance significative à mesure que le nombre de processeurs augmente.
+- Idéalement, le speed-up devrait rester constant puisque la charge de travail augmente proportionnellement au nombre de processeurs. Cependant, le graphique montre une efficacité réduite, surtout après 8 processeurs.
+- Cette performance pourrait être attribuée à une augmentation de la complexité de la gestion des données à travers les différents processeurs, entraînant une surcharge plus élevée pour la synchronisation et la communication.
+
+<br>
+
+### **6.2. Synthèse des Résultats**
+
+Les résultats indiquent que le Master Worker, lorsqu'il est exécuté en environnement de mémoire partagée locale, peut efficacement tirer parti de plusieurs cœurs jusqu'à un certain point, après quoi les gains de performance se stabilisent ou régressent. Ces observations suggèrent que des optimisations supplémentaires pourraient être nécessaires pour gérer la synchronisation des threads et l'accès concurrent à la mémoire, particulièrement dans des environnements avec un grand nombre de processeurs.
+
+<br>
+
+## 7. Parallélisation sur plusieurs machines <a id="analyse-master-workers-en-local"></a>
+
+### **7.1. Configuration et préparation des machines**
 
 #### 1. Installation des dépendances
 Avant de déployer le programme, chaque machine (master et workers) a été configurée pour exécuter du code Java. Cela inclut l'installation des outils de développement nécessaires :
@@ -520,6 +732,8 @@ Pour établir la connexion, le master utilise la méthode suivante :
 sockets[i] = new Socket(tab_ips[i], tab_ports[i]);
 ```
 
+<br>
+
 ### 7.2. Compilation et déploiement
 
 #### Déploiement des fichiers Java
@@ -534,6 +748,8 @@ Chaque machine worker est configurée pour écouter sur son port attribué, prê
 java racineprojet/src/WorkerSocket 25545
 ```
 
+<br>
+
 ### 7.3. Exécution et coordination
 
 #### Étape 1 : Lancement du master
@@ -543,8 +759,8 @@ Une fois les workers démarrés, le master est lancé. Il établit une connexion
 Chaque worker reçoit une portion des calculs à effectuer (nombre de points Monte Carlo). Les résultats partiels sont envoyés au master dès qu'ils sont prêts.
 
 #### Étape 3 : Agrégation et sauvegarde des résultats
-Le master collecte les résultats de tous les workers, les combine pour calculer \( \pi \), et affiche les informations suivantes :
-- La valeur estimée de \( \pi \),
+Le master collecte les résultats de tous les workers, les combine pour calculer $( \pi )$, et affiche les informations suivantes :
+- La valeur estimée de $( \pi )$,
 - L'erreur relative,
 - Le nombre total de points traités,
 - Le temps d'exécution.
@@ -560,9 +776,13 @@ PI,Difference,Error,Ntot,AvailableProcessors,TimeDuration(ms)
 3.141592,0.000001,0.000032,160000000,16,2350
 ```
 
+<br>
+
 ### 7.4. Optimisation : Multiplication des workers
 
 Un avantage majeur de cette approche est la possibilité d'exploiter **tous les cœurs logiques** de chaque machine. Par exemple, si une machine dispose de **8 cœurs**, elle peut exécuter plusieurs instances de WorkerSocket pour maximiser les calculs parallèles localement. Cela permet de multiplier les workers sur une seule machine, augmentant ainsi la capacité de traitement tout en limitant le nombre de machines nécessaires.
+
+<br>
 
 ### 7.5. Avantages de cette architecture
 
@@ -571,15 +791,53 @@ Un avantage majeur de cette approche est la possibilité d'exploiter **tous les 
 - **Modularité :** La séparation entre le master et les workers permet d'adapter facilement le système à différentes configurations réseau.
 - **Optimisation locale :** Exploitation maximale des cœurs logiques sur chaque machine grâce à l'exécution parallèle de plusieurs workers.
 
+<br>
+
 ### 7.6. Illustration du fonctionnement
 
 #### Diagramme de l'architecture distribuée
-![Architecture distribuée](MasterSocketUml.png)
+![Architecture distribuée](MasterSocket_Conception_V1_.png)
 
 #### Diagramme des tâches (Master-Worker)
 ![Diagramme des tâches Master-Worker](DiagrammedestachesMASTERSocket.png)
 
-### Conclusion
+<br>
+
+## 8. Erreurs sur le nombre Pi par scripts et itérations
+
+L'analyse des erreurs dans l'estimation de Pi en fonction du nombre d'itérations joue un rôle crucial pour comprendre la précision et l'efficacité des scripts utilisés dans nos expérimentations. Le graphique ci-dessous illustre la performance de trois algorithmes distincts - Assignment, Pi Calculation, et Master Worker Partagé - en mesurant les erreurs par rapport au nombre total d'itérations.
+
+![Comparaison de l'Erreur entre Trois Algorithmes sur MSI VECTOR](attachment://image.png)
+
+### **8.1. Interprétation des Résultats**
+
+- **Axes**:
+  - **Axe horizontal (Logarithmique)** : Nombre d'itérations total (`Ntot`), indiquant l'ampleur des calculs effectués.
+  - **Axe vertical (Logarithmique)** : Erreur, mesurant l'écart entre la valeur estimée de π et sa valeur réelle approximative (π ≈ 3.14159).
+
+- **Couleurs et Marqueurs**:
+  - **Bleu (Cercle et Étoile)** : Résultats pour l'algorithme 'Assignment', avec des points pour la médiane et des étoiles pour la moyenne.
+  - **Vert (Triangle et Losange)** : Résultats pour 'Pi Calculation', suivant le même schéma de marquage.
+  - **Rouge (Croix et X)** : Résultats pour 'Master Worker Partagé', illustrant également la médiane et la moyenne.
+
+<br>
+
+#### **8.2. Observations Clés**
+
+1. **Tendance Générale**:
+   - Pour tous les algorithmes, l'erreur tend à diminuer avec l'augmentation du nombre d'itérations, ce qui est conforme aux attentes théoriques de la loi des grands nombres appliquée à la méthode de Monte Carlo.
+
+2. **Comparaison entre les Algorithmes**:
+   - **Assignment** et **Pi Calculation** montrent des performances similaires, avec des fluctuations notables dans l'erreur médiane et moyenne, surtout dans les gammes d'itérations moyennes (10^7 à 10^9).
+   - **Master Worker Partagé** montre une réduction plus cohérente et stable de l'erreur avec l'augmentation des itérations, suggérant une possible meilleure gestion de la variance dans l'estimation de π, peut-être due à une meilleure répartition du travail et synchronisation.
+
+3. **Implications Pratiques**:
+   - La diminution de l'erreur avec des itérations plus élevées confirme l'importance d'un nombre suffisant d'essais pour atteindre une précision acceptable dans l'estimation de π.
+   - Les performances relatives des scripts indiquent que le choix de l'algorithme et sa mise en œuvre peuvent significativement influencer la précision des résultats, soulignant l'importance d'optimisations algorithmiques et de choix de conception.
+
+<br>
+
+## 9. Conclusion
 
 L'approche distribuée implémentée dans ce projet démontre une utilisation efficace des ressources réseau et matérielles pour effectuer des calculs Monte Carlo sur un cluster de machines. Grâce à l'architecture **Master-Worker** et à l'utilisation des sockets TCP, ce système est capable de traiter des charges importantes tout en restant flexible et évolutif.
 

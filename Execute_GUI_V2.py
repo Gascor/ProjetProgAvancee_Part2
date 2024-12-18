@@ -27,9 +27,10 @@ def gui():
     points_weak = tk.StringVar(value='100000,1000000,10000000')
     thread_counts = tk.StringVar(value='1,2,4,8,16,32')
     repeat_count = tk.IntVar(value=5)
-    masterworker_enabled = tk.BooleanVar(value=False)
-    masterworker_points = tk.StringVar(value='1600000')
-    masterworker_workers = tk.IntVar(value=4)
+    pi_strong_enabled = tk.BooleanVar(value=True)
+    assignment_strong_enabled = tk.BooleanVar(value=True)
+    pi_weak_enabled = tk.BooleanVar(value=True)
+    assignment_weak_enabled = tk.BooleanVar(value=True)
 
     def start_calculations():
         """
@@ -43,31 +44,20 @@ def gui():
         for points in points_list_strong:
             for thread in threads:
                 for _ in range(repeats):
-                    run_java_program(points // thread, thread, "results_pi_strong", "Pi")
-                    run_java_program(points // thread, thread, "results_assignment_strong", "Assignment102")
+                    if pi_strong_enabled.get():
+                        run_java_program(points // thread, thread, "results_pi_strong", "Pi")
+                    if assignment_strong_enabled.get():
+                        run_java_program(points // thread, thread, "results_assignment_strong", "Assignment102")
 
         for points in points_list_weak:
             for thread in threads:
                 for _ in range(repeats):
-                    run_java_program(points, thread, "results_pi_weak", "Pi")
-                    run_java_program(points, thread, "results_assignment_weak", "Assignment102")
-
-        if masterworker_enabled.get():
-            total_points = int(masterworker_points.get())
-            workers = masterworker_workers.get()
-            for _ in range(repeats):
-                run_java_program(total_points, workers, "results_masterworker_strong", "MasterWorker")
-                run_java_program(total_points * workers, workers, "results_masterworker_weak", "MasterWorker")
+                    if pi_weak_enabled.get():
+                        run_java_program(points, thread, "results_pi_weak", "Pi")
+                    if assignment_weak_enabled.get():
+                        run_java_program(points, thread, "results_assignment_weak", "Assignment102")
 
         print("Calculs terminés.")
-
-    def toggle_masterworker():
-        """
-        Active ou désactive les entrées pour le test MasterWorker en fonction de l'état du bouton à cocher.
-        """
-        state = 'normal' if masterworker_enabled.get() else 'disabled'
-        points_masterworker_entry.config(state=state)
-        workers_masterworker_entry.config(state=state)
 
     # Configuration des widgets de l'interface
     tk.Label(window, text="Points pour scalabilité forte:").pack()
@@ -82,16 +72,10 @@ def gui():
     tk.Label(window, text="Nombre de répétitions:").pack()
     tk.Entry(window, textvariable=repeat_count).pack()
 
-    masterworker_checkbox = tk.Checkbutton(window, text="Activer le test MasterWorker", variable=masterworker_enabled, command=toggle_masterworker)
-    masterworker_checkbox.pack()
-
-    tk.Label(window, text="Nombre de points pour MasterWorker:").pack()
-    points_masterworker_entry = tk.Entry(window, textvariable=masterworker_points, state='disabled')
-    points_masterworker_entry.pack()
-
-    tk.Label(window, text="Nombre de workers pour MasterWorker:").pack()
-    workers_masterworker_entry = tk.Entry(window, textvariable=masterworker_workers, state='disabled')
-    workers_masterworker_entry.pack()
+    tk.Checkbutton(window, text="Activer Pi pour scalabilité forte", variable=pi_strong_enabled).pack()
+    tk.Checkbutton(window, text="Activer Assignment102 pour scalabilité forte", variable=assignment_strong_enabled).pack()
+    tk.Checkbutton(window, text="Activer Pi pour scalabilité faible", variable=pi_weak_enabled).pack()
+    tk.Checkbutton(window, text="Activer Assignment102 pour scalabilité faible", variable=assignment_weak_enabled).pack()
 
     tk.Button(window, text="Démarrer les calculs", command=start_calculations).pack()
     window.mainloop()

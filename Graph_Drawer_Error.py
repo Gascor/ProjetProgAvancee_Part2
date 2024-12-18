@@ -5,7 +5,7 @@ import numpy as np
 # Définir les chemins des fichiers et les labels associés
 files = [
     "Data/results_assignment_weak_MSIVECTOR.csv",
-    "Data/results_pi_weak_MSIVECTOR.csv",
+    "results_pi_strong_20241218.csv",
     "Data/results_mw-local_weak_MSIVECTOR.csv",
 ]
 labels = ['Assignment', 'Pi Calculation', 'Master Worker Partagé']
@@ -42,7 +42,7 @@ plt.grid(True, which="both", linestyle="--", linewidth=0.5)
 plt.legend()
 
 # Sauvegarder le graphique
-output_file = "doc/Docs/graph/comparison_median_mean_error_by_algorithm.png"
+output_file = "doc/Docs/graph/comparison_median_mean_error_by_algorithm2.png"
 plt.savefig(output_file, dpi=300)
 
 # Afficher le graphique

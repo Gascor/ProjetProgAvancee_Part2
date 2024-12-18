@@ -6,12 +6,12 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 
 class PiMonteCarlo {
-    int nThrows;
+    long nThrows;
     AtomicInteger nSuccess;
     double value;
     int nThreads; // Nombre de threads à utiliser
 
-    public PiMonteCarlo(int throwsCount, int nThreads) {
+    public PiMonteCarlo(long throwsCount, int nThreads) {
         this.nThrows = throwsCount;
         this.nSuccess = new AtomicInteger(0);
         this.value = 0;
@@ -20,13 +20,13 @@ class PiMonteCarlo {
 
     public double getPi() {
         ExecutorService executor = Executors.newFixedThreadPool(nThreads);
-        int chunkSize = nThrows / nThreads;
+        long chunkSize = nThrows / nThreads;
 
         for (int j = 0; j < nThreads; j++) {
-            final int start = j * chunkSize;
-            final int end = (j == nThreads - 1) ? nThrows : start + chunkSize;
+            final long start = j * chunkSize;
+            final long end = (j == nThreads - 1) ? nThrows : start + chunkSize;
             executor.submit(() -> {
-                for (int i = start; i < end; i++) {
+                for (long i = start; i < end; i++) {
                     double x = Math.random();
                     double y = Math.random();
                     if (x * x + y * y <= 1)

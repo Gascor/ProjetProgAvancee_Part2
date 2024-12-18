@@ -7,7 +7,7 @@ public class Assignment102 {
             return;
         }
 
-        int totalPoints = Integer.parseInt(args[0]);
+        long totalPoints = Long.parseLong(args[0]);
         int numThreads = Integer.parseInt(args[1]);
         String outputCsv = args[2];
 

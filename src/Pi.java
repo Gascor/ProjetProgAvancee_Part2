@@ -21,7 +21,7 @@ public class Pi
             return;
         }
 
-        int totalCount = Integer.parseInt(args[0]);  // Total number of points per worker
+        long totalCount = Long.parseLong(args[0]);  // Total number of points per worker
         int numWorkers = Integer.parseInt(args[1]); // Number of workers (threads)
         String outputCsvFile = args[2];             // CSV file name
 
@@ -34,7 +34,7 @@ public class Pi
  * and aggregates the results.
  */
 class Master {
-    public long doRun(int totalCount, int numWorkers, String outputCsvFile) throws InterruptedException, ExecutionException {
+    public long doRun(long totalCount, int numWorkers, String outputCsvFile) throws InterruptedException, ExecutionException {
 
         long startTime = System.currentTimeMillis();
 
@@ -81,8 +81,8 @@ class Master {
  */
 class Worker implements Callable<Long>
 {
-    private int numIterations;
-    public Worker(int num)
+    private long numIterations;
+    public Worker(long num)
     {
         this.numIterations = num;
     }
@@ -92,7 +92,7 @@ class Worker implements Callable<Long>
     {
         long circleCount = 0;
         Random prng = new Random ();
-        for (int j = 0; j < numIterations; j++)
+        for (long j = 0; j < numIterations; j++)
         {
             double x = prng.nextDouble();
             double y = prng.nextDouble();
