@@ -21,15 +21,39 @@ Note Importante : Ce rapport à été reformulé plus clairement à l'aide de Ch
 - [2. Algorithmes et Paradigmes employés](#algo-et-paradigme)
   - [2.1. Iteration](#iteration)
   - [2.2. MasterWorker](#masterworker)
-- [3. Mise en oeuvre sur Machine Partagé](#mise-en-oeuvre-sur-machine-partage)
+- [3. Mise en œuvre sur Machine Partagée](#mise-en-oeuvre-sur-machine-partage)
   - [3.1. Analyse Assignment 102](#analyse-assignment-102)
-  - [3.2. Analyse Pi.java](#analyse-pijava)
+    - [3.1.1. Classes principales](#classes-principales)
+    - [3.1.2. Utilisation du package `Concurrent`](#utilisation-du-package-concurrent)
+    - [3.1.3. Paradigme choisi](#paradigme-choisi)
+    - [3.1.4. Gestion des tâches dans Assignment102](#gestion-des-taches-dans-assignment102)
+    - [3.1.5. Optimisations possibles](#optimisations-possibles)
+  - [3.2. Analyse de Pi.java](#analyse-pijava)
+    - [3.2.1. Classes principales](#classes-principales-pi-java)
+    - [3.2.2. Utilisation des outils `Concurrent`](#utilisation-des-outils-concurrent-pi-java)
+    - [3.2.3. Paradigme choisi](#paradigme-choisi-pi-java)
+    - [3.2.4. Gestion des tâches dans Pi.java](#gestion-des-taches-dans-pi-java)
+    - [3.2.5. Comparaison entre Assignment102 et Pi.java](#comparaison-entre-assignment102-et-pi-java)
 - [4. Qualité de test de perf](#qualite-de-test-de-perf)
-- [5. Mise en oeuvre en mémoire distribuée](#mise-en-oeuvre-en-memoire-distribuee)
+  - [4.1. Définitions des métriques](#definitions-des-metriques)
+  - [4.2. Paramètres et méthodologie](#parametres-et-methodologie)
+  - [4.3. Automatisation et traitement des tests](#automatisation-et-traitement-des-tests)
+  - [4.4. Résultats expérimentaux](#resultats-experimentaux)
+  - [4.5. Observations](#observations)
+  - [4.6. Rapport avec la norme Iso](#rapport-avec-la-norme-iso)
+  - [4.7. Effectiveness sur Pi.java](#effectiveness-sur-pi-java)
+  - [4.7bis. Analyse Comparée des Speed-Ups](#analyse-comparee-des-speed-ups)
+- [5. Mise en œuvre en mémoire distribuée](#mise-en-oeuvre-en-memoire-distribuee)
   - [5.1. Java Socket MW](#java-socket-mw)
 - [6. Perf MW](#perf-mw)
 - [7. Parallélisation sur plusieurs machines](#parallelisation-sur-plusieurs-machines)
-- [8. Erreurs sur le nombre Pi par scripts et itérations.](#parallelisation-sur-plusieurs-machines)
+  - [7.1. Configuration et préparation des machines](#configuration-et-preparation-des-machines)
+  - [7.2. Compilation et déploiement](#compilation-et-deploiement)
+  - [7.3. Exécution et coordination](#execution-et-coordination)
+  - [7.4. Optimisation : Multiplication des workers](#optimisation-multiplication-des-workers)
+  - [7.5. Avantages de cette architecture](#avantages-de-cette-architecture)
+  - [7.6. Illustration du fonctionnement](#illustration-du-fonctionnement)
+- [8. Erreurs sur le nombre Pi par scripts et itérations](#erreurs-sur-le-nombre-pi)
 - [9. Conclusion](#conclusion)
 
 ---
@@ -599,6 +623,114 @@ Un **speedup idéal** en scalabilité forte se manifeste par une courbe linéair
 
 <br>
 
+
+### **4.6. Rapport avec la norme Iso**
+
+#### Calcul du Time et du Task Time
+
+Pour évaluer l'efficacité du parallélisme dans nos calculs, nous utilisons deux méthodes principales pour déterminer le temps cible (Tt) et le temps mesuré (Ta) :
+
+1. **Comparaison avec un code séquentiel**
+    - **Temps cible (Tt)** : Correspond au temps d’exécution sur un seul processeur, soit T1.
+    - **Temps mesuré (Ta)** : Temps d’exécution parallèle avec p processeurs, soit Tp.
+   
+   Cette méthode évalue l’amélioration due au parallélisme en comparant les performances parallèles à celles d'une exécution séquentielle.
+
+2. **Parallélisme idéal (choix retenu)**
+    - **Temps cible (Tt)** : Défini comme le temps idéal, soit Tp, dans l'hypothèse d'un parallélisme parfait.
+    - **Temps mesuré (Ta)** : Temps réellement mesuré avec p processeurs, également noté Tp.
+
+   Ce cadre est utilisé pour mesurer la proximité des performances réelles par rapport à un parallélisme idéal.
+
+#### Calcul de l’efficacité selon la norme ISO/IEC 25022:2012
+
+L’efficacité est calculée en suivant la formule :
+- **Efficacité = (Tt / Ta) * 100**
+  - **Tt** : Temps idéal parallèle.
+  - **Ta** : Temps d’exécution réel.
+
+Une efficacité élevée indique une proximité avec le parallélisme idéal, signifiant que le programme est plus efficace.
+
+Une autre formule possible est :
+- **Efficacité = (Tt - Ta) / Tt**
+  - Avec **Tt = (1/p) * T1** pour un parallélisme idéal.
+
+Cette mesure évalue l'efficacité du programme en pourcentage : plus ce pourcentage est élevé, mieux c'est.
+
+Le **Time**, quant à lui, est défini par :
+- **Time = TT / Ta**
+  - Ce qui équivaut au speedup, comparant le code séquentiel au temps parallèle.
+
+### Efficacité selon la norme ISO/IEC 25022:2012
+
+Nous utilisons la métrique de l'erreur pour évaluer l'efficacité de notre code de Monte Carlo en calculant l'écart entre la valeur calculée de π et la valeur réelle :
+
+- **Erreur = Math.abs((value - Math.PI)) / Math.PI**
+  - **value** : Valeur de π estimée par le code de Monte Carlo.
+  - **Math.PI** : Valeur réelle de π.
+
+L'objectif est de voir comment l'erreur diminue avec l'augmentation du nombre d'itérations, ce qui indique une meilleure approximation de π. Plus le nombre d'itérations est élevé, plus la précision de l'estimation devrait s'améliorer.
+
+Cette métrique nous permet également de juger la fiabilité du code dans les contextes de scalabilité réduite, où la diversité des points testés est plus grande, offrant une mesure complète de la satisfaction de la qualité d'utilisation (trust) des algorithmes.
+
+### **4.7. Effectiveness sur Pi.java**
+
+- 1. **Définition de l'Effectiveness** :
+   L'effectiveness est calculée comme le rapport entre le speed-up réel obtenu et le speed-up idéal pour le même nombre de processeurs. Elle est exprimée en pourcentage. Formule : $[\text{Effectiveness (\%)} = \left(\frac{\text{Speed-up réel}}{\text{Speed-up idéal}}\right) \times 100 ]$
+
+- 2. **Ajout de la colonne au tableau** :
+   Pour chaque valeur du nombre de processeurs, nous calculerons l'effectiveness en utilisant les données du speed-up réel extraites du graphique et le speed-up idéal (qui serait le même que le nombre de processeurs, car le speed-up idéal double à chaque fois que le nombre de processeurs double).
+
+#### Scalabilité forte (Pi) sur machine personnelle (MSI VECTOR) :
+
+|   AvailableProcessors |      PI |   Difference |     Error |    Ntot |   TimeDuration(ms) |  Moyenne du Speed-up Réel | Speed-up Idéal | Effectiveness (%) |
+|----------------------:|--------:|-------------:|----------:|--------:|-------------------:|-------------------------:|---------------:|------------------:|
+|                     1 | 3.14092 |   -0.000669  | 0.0003744 | 1.6e+06 |               49.7 |                       1.0 |              1 |       100         |
+|                     2 | 3.14122 |   -0.0003752 | 0.0002657 | 1.6e+06 |               34.8 |                       1.43|              2 |       71.5        |
+|                     4 | 3.14193 |    0.000341  | 0.0003862 | 1.6e+06 |               27.5 |                       1.81|              4 |       45.25       |
+|                     8 | 3.14123 |   -0.0003585 | 0.0003411 | 1.6e+06 |               40.6 |                       1.22|              8 |       15.25       |
+|                    16 | 3.14137 |   -0.0002272 | 0.0004115 | 1.6e+06 |               58.2 |                       0.85|             16 |        5.31       |
+|                    32 | 3.14128 |   -0.0003174 | 0.000346  | 1.6e+06 |               86.4 |                       0.57|             32 |        1.78       |
+|                    64 | 3.14198 |    0.0003916 | 0.0002352 | 1.6e+06 |               94.1 |                       0.53|             64 |        0.83       |
+
+Notez que la colonne "Moyenne du Speed-up Réel" est calculée en fonction de la durée réelle obtenue et de la durée pour un processeur, et que le speed-up idéal est calculé en supposant que chaque doublement du nombre de processeurs double la vitesse d'exécution.
+
+Cette colonne "Effectiveness" montre de manière claire à quel point le speed-up réel s'éloigne de l'idéal à mesure que le nombre de processeurs augmente, et aide à identifier des problèmes de scalabilité ou de parallélisme non efficace.
+
+### **4.7bis. Analyse Comparée des Speed-Ups**
+
+
+#### **Graphique avec $( N_{tot} = 1.6 )$ milliard de points**
+
+  ![Diagramme Pi.java Sur l'environnement personnel (MSI VECTOR)](./graph/pi_strong_mean_speedup_MSIVECTOR_Effectiveness_1600.png)
+
+- L'augmentation du speed-up suit la tendance idéale jusqu'à $( 2^3 )$ processeurs, après quoi elle décline, indiquant une diminution des gains d'efficacité avec un nombre accru de processeurs.
+- Cette configuration montre des gains de performances initiaux qui sont meilleurs comparés aux autres configurations avec moins de points.
+
+#### **Graphique avec $( N_{tot} = 160 )$ millions de points**
+- Le speed-up augmente régulièrement jusqu'à $( 2^3 )$ processeurs, puis plafonne et diminue légèrement à $( 2^5 )$.
+- Le speed-up idéal est linéaire, indiquant que le système devrait théoriquement continuer à améliorer ses performances avec l'ajout de processeurs.
+
+  ![Diagramme Pi.java Sur l'environnement personnel (MSI VECTOR)](./graph/pi_strong_mean_speedup_MSIVECTOR_Effectiveness_160.png)
+
+#### **Graphique avec $( N_{tot} = 16 )$ millions de points**
+- Le speed-up maximal est atteint à $( 2^3 )$ processeurs puis diminue, similaire au graphique avec 160 millions de points, mais avec un plafonnement plus marqué.
+- La performance relative est plus faible par rapport aux ensembles de données plus grands, indiquant que moins de données pourraient ne pas utiliser efficacement un grand nombre de processeurs.
+
+  ![Diagramme Pi.java Sur l'environnement personnel (MSI VECTOR)](./graph/pi_strong_mean_speedup_MSIVECTOR_Effectiveness_16.png)
+
+#### **Graphique avec $( N_{tot} = 1.6 )$ million de points**
+- La performance semble s'améliorer légèrement jusqu'à $( 2^2 )$ processeurs, mais diminue nettement à $( 2^4 )$ et $( 2^5 )$.
+- Ceci suggère que pour de très petits ensembles de données, l'ajout de processeurs peut en fait réduire l'efficacité due à l'overhead de gestion du parallélisme.
+
+  ![Diagramme Pi.java Sur l'environnement personnel (MSI VECTOR)](./graph/pi_strong_mean_speedup_MSIVECTOR_Effectiveness_1-6.png)
+
+### Observations Générales
+
+- **Impact de la Taille des Données** : Les ensembles de données plus importants semblent bénéficier d'une augmentation du nombre de processeurs jusqu'à un certain point, après quoi l'efficacité diminue. Cela pourrait être dû à l'overhead de communication et de synchronisation qui devient plus prononcé avec de grands nombres de processeurs.
+- **Optimalité des Ressources** : Les processeurs sont mieux utilisés quand il y a suffisamment de données à traiter. Pour les petits ensembles de données, augmenter le nombre de processeurs au-delà d'un certain seuil ne produit pas d'amélioration significative de la performance, voire entraîne une dégradation.
+- **Comparaison avec le Speed-Up Idéal** : Aucune configuration n'atteint le speed-up idéal, indiquant des pertes dues à des inefficacités dans la gestion du parallélisme, probablement à cause des coûts de communication inter-processus et de l'équilibrage de charge.
+
 ## 5. Mise en œuvre de Monte Carlo en mémoire distribuée <a id="mise-en-oeuvre-en-memoire-distribuee"></a>
 
 ### **5.1. Architecture distribuée**
@@ -784,7 +916,36 @@ Un avantage majeur de cette approche est la possibilité d'exploiter **tous les 
 
 <br>
 
-### 7.5. Avantages de cette architecture
+### 7.5 Analyse des performances du Master Worker distribué
+
+#### Scalabilité Forte et Faible sur l'environnement G24
+
+Pour évaluer l'efficacité du modèle Master Worker en environnement distribué, nous examinerons les résultats de scalabilité forte et faible obtenus dans la salle G24.
+
+#### 1. Scalabilité Forte (Master Worker Distribué)
+![Scalabilité Forte - Master Worker Distribué en G24](./graph/mw-dist_strong_mean_speedup_G24.png)
+
+**Observations**:
+- Le graphique montre le speed-up (accélération du temps d'exécution) en fonction de l'augmentation du nombre de processeurs.
+- Idéalement, le speed-up devrait augmenter de manière linéaire avec le nombre de processeurs, mais des déviations peuvent survenir en raison de l'overhead de communication et de synchronisation.
+- Cette courbe permettra d'évaluer si l'ajout de processeurs améliore proportionnellement les performances ou si des facteurs limitatifs entrent en jeu.
+
+#### 2. Scalabilité Faible (Master Worker Distribué)
+![Scalabilité Faible - Master Worker Distribué en G24](./graph/mw-dist_weak_mean_speedup_G24.png)
+
+**Observations**:
+- La scalabilité faible mesure le speed-up tout en augmentant proportionnellement la charge de travail avec le nombre de processeurs.
+- Un speed-up constant ou légèrement croissant serait idéal, indiquant que le système gère efficacement des charges de travail plus grandes sans perte significative d'efficacité.
+- Ce graphique aide à comprendre si le système est capable de maintenir sa performance malgré l'augmentation de la charge, un indicateur clé de l'évolutivité du système.
+
+### Conclusion de l'Analyse
+
+- **Efficacité du Parallélisme**: L'analyse des graphiques fournira des insights sur l'efficacité du parallélisme dans le cadre du Master Worker distribué, notamment en ce qui concerne l'impact de l'overhead de la gestion de la communication réseau et de la synchronisation des tâches.
+- **Optimisation Possible**: Selon les résultats, des recommandations d'optimisation pourraient être nécessaires, par exemple en améliorant les algorithmes de répartition des tâches ou en minimisant la communication interprocessus pour réduire l'overhead.
+
+<br>
+
+### 7.6. Avantages de cette architecture
 
 - **Scalabilité horizontale :** L'ajout de nouvelles machines dans le cluster permet de traiter un plus grand nombre de points Monte Carlo en parallèle.
 - **Répartition efficace :** Chaque machine effectue une partie distincte du calcul, ce qui réduit les risques de surcharge.
@@ -793,10 +954,10 @@ Un avantage majeur de cette approche est la possibilité d'exploiter **tous les 
 
 <br>
 
-### 7.6. Illustration du fonctionnement
+### 7.7. Illustration du fonctionnement
 
 #### Diagramme de l'architecture distribuée
-![Architecture distribuée](doc/Conception/MasterSocket_Conception_V1_.png)
+![Architecture distribuée](../Conception/MasterSocket_Conception_V1.png)
 
 #### Diagramme des tâches (Master-Worker)
 ![Diagramme des tâches Master-Worker](DiagrammedestachesMASTERSocket.png)
@@ -807,7 +968,7 @@ Un avantage majeur de cette approche est la possibilité d'exploiter **tous les 
 
 L'analyse des erreurs dans l'estimation de Pi en fonction du nombre d'itérations joue un rôle crucial pour comprendre la précision et l'efficacité des scripts utilisés dans nos expérimentations. Le graphique ci-dessous illustre la performance de trois algorithmes distincts - Assignment, Pi Calculation, et Master Worker Partagé - en mesurant les erreurs par rapport au nombre total d'itérations.
 
-![Comparaison de l'Erreur entre Trois Algorithmes sur MSI VECTOR](comparison_median_mean_error_by_algorithm_extended)
+![Comparaison de l'Erreur entre Trois Algorithmes sur MSI VECTOR](./graph/comparison_median_mean_error_by_algorithm_extended.png)
 
 ### **8.1. Interprétation des Résultats**
 
