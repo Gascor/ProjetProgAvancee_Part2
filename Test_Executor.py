@@ -2,7 +2,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 # Charger les données à partir d'un fichier CSV
-data_file = "Data/results_assignment_strong_G24.csv"  # Utilisez le chemin complet ici
+data_file = "Data/results_assignment_strong_MSIVECTOR.csv"  # Utilisez le chemin complet ici
 df = pd.read_csv(data_file, delimiter=';', decimal='.', skipinitialspace=True, header=0)
 
 # Vérifier les premières lignes pour examiner les données
@@ -47,7 +47,7 @@ plt.ylim(min(speedup_means) * 0.8, 80)  # Augmenter la limite supérieure pour m
 
 # Configurer le graphique combiné
 plt.title("""Moyenne du Graphique de Scalabilité Forte (Speed-up) | Calculs sur Assignment102.java
-(Sur Ordinateur Salle G24 cf: Rapport section Architecture materielles)""")
+(Sur Ordinateur Portable MSI VECTOR cf: Rapport section Architecture materielles)""")
 plt.xlabel("Nombre de processeurs")
 plt.ylabel("Moyenne du Speed-up")
 plt.xscale("log", base=2)
@@ -56,7 +56,7 @@ plt.grid(True, which="both", linestyle="--", linewidth=0.5)
 plt.legend()
 
 # Sauvegarder le graphique
-combined_output_file = "doc/Docs/pi_scalabilite_forte_moyenne_speedup.png"  # Utilisez le chemin complet ici
+combined_output_file = "doc/Docs/imgs/assignment102_strong_mean_speedup_MSIVECTOR.png"  # Utilisez le chemin complet ici
 plt.savefig(combined_output_file, dpi=300)
 
 # Afficher le graphique (facultatif en mode batch)
