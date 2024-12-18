@@ -51,8 +51,9 @@ Note Importante : Ce rapport à été reformulé plus clairement à l'aide de Ch
   - [7.2. Compilation et déploiement](#compilation-et-deploiement)
   - [7.3. Exécution et coordination](#execution-et-coordination)
   - [7.4. Optimisation : Multiplication des workers](#optimisation-multiplication-des-workers)
-  - [7.5. Avantages de cette architecture](#avantages-de-cette-architecture)
-  - [7.6. Illustration du fonctionnement](#illustration-du-fonctionnement)
+  - [7.5 Analyse des performances du Master Worker distribué](#analyse-perf-mw)
+  - [7.6. Avantages de cette architecture](#avantages-de-cette-architecture)
+  - [7.7. Illustration du fonctionnement](#illustration-du-fonctionnement)
 - [8. Erreurs sur le nombre Pi par scripts et itérations](#erreurs-sur-le-nombre-pi)
 - [9. Conclusion](#conclusion)
 
@@ -866,7 +867,7 @@ sockets[i] = new Socket(tab_ips[i], tab_ports[i]);
 
 <br>
 
-### 7.2. Compilation et déploiement
+### **7.2. Compilation et déploiement**
 
 #### Déploiement des fichiers Java
 Le code Java pour le master et les workers a été déployé sur leurs machines respectives à l'aide de **rsync** ou **scp**. Une fois transféré, le programme a été compilé localement sur chaque machine :
@@ -882,7 +883,7 @@ java racineprojet/src/WorkerSocket 25545
 
 <br>
 
-### 7.3. Exécution et coordination
+### **7.3. Exécution et coordination**
 
 #### Étape 1 : Lancement du master
 Une fois les workers démarrés, le master est lancé. Il établit une connexion avec chaque worker en utilisant leurs adresses IP et ports. Ensuite, il envoie des requêtes pour effectuer les calculs Monte Carlo.
@@ -910,13 +911,13 @@ PI,Difference,Error,Ntot,AvailableProcessors,TimeDuration(ms)
 
 <br>
 
-### 7.4. Optimisation : Multiplication des workers
+### **7.4. Optimisation : Multiplication des workers**
 
 Un avantage majeur de cette approche est la possibilité d'exploiter **tous les cœurs logiques** de chaque machine. Par exemple, si une machine dispose de **8 cœurs**, elle peut exécuter plusieurs instances de WorkerSocket pour maximiser les calculs parallèles localement. Cela permet de multiplier les workers sur une seule machine, augmentant ainsi la capacité de traitement tout en limitant le nombre de machines nécessaires.
 
 <br>
 
-### 7.5 Analyse des performances du Master Worker distribué
+### **7.5 Analyse des performances du Master Worker distribué**
 
 #### Scalabilité Forte et Faible sur l'environnement G24
 
@@ -945,7 +946,7 @@ Pour évaluer l'efficacité du modèle Master Worker en environnement distribué
 
 <br>
 
-### 7.6. Avantages de cette architecture
+### **7.6. Avantages de cette architecture**
 
 - **Scalabilité horizontale :** L'ajout de nouvelles machines dans le cluster permet de traiter un plus grand nombre de points Monte Carlo en parallèle.
 - **Répartition efficace :** Chaque machine effectue une partie distincte du calcul, ce qui réduit les risques de surcharge.
@@ -954,7 +955,7 @@ Pour évaluer l'efficacité du modèle Master Worker en environnement distribué
 
 <br>
 
-### 7.7. Illustration du fonctionnement
+### **7.7. Illustration du fonctionnement**
 
 #### Diagramme de l'architecture distribuée
 ![Architecture distribuée](../Conception/MasterSocket_Conception_V1.png)
