@@ -2,7 +2,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 # Charger les données à partir d'un fichier CSV
-data_file = "results_assignment_strong_20241217.csv"  # Remplacez par le chemin complet
+data_file = "Data.csv"  # Remplacez par le chemin complet
 df = pd.read_csv(data_file, delimiter=';', decimal='.', skipinitialspace=True, header=0)
 
 # Créer un graphique combiné
