@@ -2,11 +2,11 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 # Charger les données à partir d'un fichier CSV
-data_file = "Data.csv"  # Remplacez par le chemin complet
+data_file = "Data/results_mw-dist_weak_G24.csv"  # Remplacez par le chemin complet
 df = pd.read_csv(data_file, delimiter=';', decimal='.', skipinitialspace=True, header=0)
 
 # Créer un graphique combiné
-plt.figure(figsize=(12, 7))
+plt.figure(figsize=(12, 7))  # Ajustez la taille du graphique si nécessaire
 
 # Groupement par nombre de processeurs et calcul du speed-up moyen
 grouped = df.groupby('AvailableProcessors')
@@ -25,18 +25,18 @@ for name, group in grouped:
 plt.plot(processor_counts, speedup_means, marker="o", linestyle='-', label="Moyenne du Speed-up")
 plt.axhline(y=1, color="red", linestyle="--", label="Speed-up idéal")
 
-# Ajuster les limites des axes
-plt.xlim(0.8, max(processor_counts) * 2)  # Élargissement de l'axe des X
-plt.ylim(min(speedup_means) * -4.5, 4.5)  # Augmenter la limite supérieure pour mieux centrer la ligne rouge
+# Ajuster les limites des axes pour mieux "dézoomer"
+plt.xlim(0.5, max(processor_counts) * 1.5)  # Assurez-vous que 'max(processor_counts)' est votre valeur maximale
+plt.ylim(min(speedup_means) * 0.8, 1.1)  # Ajuste ymin pour être un peu en dessous du minimum de vos speed-up
 
-plt.title("Moyenne du Graphique de Scalabilité Forte (Speed-up)")
+plt.title("""Moyenne du Graphique de Scalabilité Faible (Speed-up) | Calculs Master Worker Distribué
+(Sur Ordinateur Salle G24 cf: Rapport section Architecture materielles)""")
 plt.xlabel("Nombre de processeurs")
 plt.ylabel("Moyenne du Speed-up")
 plt.xscale("log", base=2)
-plt.yscale("linear")
+plt.yscale("linear")  # Utilisez 'linear' si cela fonctionne mieux pour vos données
 plt.grid(True, which="both", linestyle="--", linewidth=0.5)
 plt.legend()
 
 # Sauvegarder et afficher le graphique
-plt.savefig("doc/Docs/pi_scalabilite_forte_moyenne_speedup.png", dpi=300)
-plt.show()
+plt.savefig("doc/Docs/graph/mw-dist_weak_mean_speedup_G24.png", dpi=300)
