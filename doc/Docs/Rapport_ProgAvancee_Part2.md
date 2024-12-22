@@ -55,6 +55,7 @@ Note Importante : Ce rapport à été reformulé plus clairement à l'aide de Ch
   - [7.6. Avantages de cette architecture](#avantages-de-cette-architecture)
   - [7.7. Illustration du fonctionnement](#illustration-du-fonctionnement)
 - [8. Erreurs sur le nombre Pi par scripts et itérations](#erreurs-sur-le-nombre-pi)
+- [**Complément de rapport - Approfondissement de la méthode de monte carlo avec CUDA**](#cuda)
 - [9. Conclusion](#conclusion)
 
 ---
@@ -434,9 +435,23 @@ Nous avons comparé les performances des deux implémentations **Pi.java** et **
 
 ### **4.1. Définitions des métriques**
 
-- **Scalabilité forte** : Évalue les performances lorsque le nombre de threads augmente, mais que la charge de travail (le nombre total de points, $(n_{\text{tot}})$ reste constant. Cette mesure permet d’analyser si les ressources multiprocesseurs disponibles sont efficacement exploitées.
+### Définitions des Métriques de Performance incluant le Speedup
 
-- **Scalabilité faible** : Analyse les performances lorsque la taille du problème augmente proportionnellement au nombre de threads. Cela montre la capacité du programme à maintenir des performances constantes malgré une charge de travail croissante.
+- #### **Speedup**
+  Le speedup est une mesure de l'amélioration de la vitesse d'exécution d'un algorithme ou d'une application lorsqu'elle est exécutée sur plusieurs processeurs comparativement à un seul processeur. Cette métrique est essentielle pour évaluer l'efficacité des implémentations parallèles. Le speedup est généralement exprimé comme le rapport du temps d'exécution sur un seul processeur au temps d'exécution sur plusieurs processeurs. Il sert à évaluer la réduction du temps d'exécution grâce à l'utilisation du parallélisme. Idéalement, le speedup serait égal au nombre de processeurs utilisés (speedup linéaire), mais en pratique, il peut être inférieur en raison des coûts de coordination, de communication entre les processeurs, ou des portions de code qui ne peuvent être parallélisées.
+
+- #### **Scalabilité Forte (Speedup Fort)**
+  La scalabilité forte, ou speedup fort, évalue l'amélioration de performance d'un système informatique lorsque le nombre de processeurs augmente, tout en maintenant la taille totale de la tâche constante. C'est un indicateur de l'efficacité avec laquelle un système peut accélérer le traitement avec des ressources supplémentaires sans changer la charge de travail globale. Le speedup fort est calculé par la formule :
+$[ S(p) = \frac{T(1)}{T(p)} ]$
+où $( S(p) )$ est le speedup avec $( p )$ processeurs, $( T(1) )$ est le temps d'exécution avec un seul processeur, et $( T(p) )$ est le temps d'exécution avec $( p )$ processeurs.
+
+- #### **Scalabilité Faible (Speedup Faible)**
+  La scalabilité faible, ou speedup faible, mesure comment les performances d'un système s'adaptent lorsque la taille de la charge de travail augmente proportionnellement au nombre de processeurs. Ce concept est crucial pour évaluer la capacité du système à gérer des augmentations de travail en ajoutant simplement plus de ressources, afin de maintenir un niveau de performance constant. Le speedup faible est défini comme :
+$[ S_w(p) = \frac{T_w(1)}{T_w(p)} ]$
+où $( S_w(p) )$ représente le speedup faible pour $( p )$ processeurs, $( T_w(1) )$ est le temps avec une charge de travail de base et un processeur, et $( T_w(p) )$ est le temps avec une charge augmentée proportionnellement et $( p )$ processeurs.
+
+- #### Importance du Speedup
+  Inclure le speedup parmi les métriques d'évaluation permet de comparer directement l'efficacité des différentes implémentations algorithmiques sur des architectures multiprocesseurs, offrant une vision claire des bénéfices et des limites du parallélisme dans des contextes spécifiques. Cela aide à identifier où les optimisations sont possibles et nécessaires pour améliorer la scalabilité et l'efficacité globales des applications parallèles.
 
 <br>
 
@@ -996,6 +1011,46 @@ L'analyse des erreurs dans l'estimation de Pi en fonction du nombre d'itération
 3. **Implications Pratiques**:
    - La diminution de l'erreur avec des itérations plus élevées confirme l'importance d'un nombre suffisant d'essais pour atteindre une précision acceptable dans l'estimation de π.
    - Les performances relatives des scripts indiquent que le choix de l'algorithme et sa mise en œuvre peuvent significativement influencer la précision des résultats, soulignant l'importance d'optimisations algorithmiques et de choix de conception.
+
+<br>
+
+### **Complément de rapport - Approfondissement de la méthode de Monte Carlo avec CUDA** <a id="cuda"></a>
+
+- #### Contexte
+
+  Dans l'objectif continue d'améliorer les performances et la précision de l'estimation de π via la méthode de Monte Carlo, une exploration avec la technologie CUDA s'est imposée comme une solution. L'accès limité à plusieurs machines équipées de CPU multicœurs à l'université dues aux contraintes de temps, a orienté cette recherche vers une utilisation plus intensive des ressources GPU disponibles. L'utilisation du GPU Nvidia RTX 4090 de mon PC Portable, doté d'une puissance de calcul significative, s'est révélée être une alternative efficace pour surpasser les limitations des architectures multi-CPU en termes de scalabilité et d'efficience.
+
+- #### Motivation
+
+  L'objectif principal de ce complément de rapport est de pousser les limites des performances et de la précision de la méthode de Monte Carlo en exploitant la capacité de calcul parallèle des GPU. CUDA, en permettant un contrôle précis sur le parallélisme à granularité fine, offre une plateforme idéale pour optimiser les calculs intensifs nécessaires à cette méthode. De plus, l'approche GPU se justifie par la capacité de traiter un nombre élevé de simulations simultanément, réduisant significativement le temps de calcul tout en maintenant, voire en améliorant, la précision des résultats.
+
+- #### Implémentation CUDA de Monte Carlo pour π
+
+  Le code fourni illustre une implémentation CUDA de la méthode de Monte Carlo pour l'estimation de π. Cette approche utilise deux kernels principaux : un pour initialiser les états du générateur de nombres aléatoires (RNG) et un autre pour effectuer les simulations de tirage de points et calculer le nombre de points tombant à l'intérieur d'un quart de cercle. Voici les points clés de l'implémentation :
+
+    - **Initialisation des RNG** : Chaque thread dispose de son propre état de RNG, ce qui permet des tirages aléatoires indépendants essentiels pour la précision des estimations.
+    - **Calcul de π** : Le kernel calcule le nombre de points dans le cercle et utilise la réduction parallèle pour sommer ces résultats au niveau du bloc, minimisant les interactions avec la mémoire globale.
+    - **Optimisation de l'accès à la mémoire** : L'utilisation de la mémoire partagée pour la réduction des résultats locaux au bloc permet de réduire considérablement la latence associée aux accès mémoire globale.
+
+- #### Performance et Analyse
+
+  Le code a été testé sur un Nvidia RTX 4090, exploitant pleinement ses cœurs CUDA pour maximiser les performances de calcul. La nature hautement parallèle du problème de Monte Carlo se prête bien à l'architecture GPU, permettant une accélération significative par rapport aux implémentations CPU classiques.
+
+- #### Graphique de Performance par itération (GPU vs CPU Multi-coeurs)
+
+  Le graphique suivant montre l'amélioration des performances obtenues avec l'implémentation CUDA, mettant en évidence l'efficacité et la scalabilité de l'approche GPU, ici j'ai utilisé des données du MasterWorker utilisant PI.java en 32 coeurs local en comparaison avec une adaptation du code Pi.java en cuda :
+
+![Comparaison Performance MonteCarlo CPU vs GPU](./graph/comparison_plot_time_cpu_gpu.png)
+
+- #### Graphique de Précision de Pi (Avec le script Cuda en <u>**Orange**</u>)
+
+  Le graphique suivant montre l'amélioration des performances obtenues sur la précision de PI, c'est le meme graphique que vu précédemment mais en comparaison cette fois ci avec la précision de pi que j'ai pu obtenir avec la technolgie CUDA :
+
+![Comparaison de l'Erreur entre Quatres Algorithmes sur MSI VECTOR](./graph/comparison_median_mean_error_by_algorithm_with_cuda.png)
+
+- #### Conclusion du complément
+
+  L'exploration de CUDA pour l'estimation de π par la méthode de Monte Carlo a confirmé que les GPU, en particulier les modèles avancés tels que le Nvidia RTX 4090, offrent une plateforme puissante pour les calculs scientifiques intensifs. Cela ma permis en l'occurence de pousser un peu plus loin mon estimation du nombre PI grace à cette rapidité de calcul.
 
 <br>
 

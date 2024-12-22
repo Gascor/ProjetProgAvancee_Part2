@@ -5,15 +5,16 @@ import numpy as np
 # Définir les chemins des fichiers et les labels associés
 files = [
     "Data/results_assignment_weak_MSIVECTOR.csv",
-    "results_pi_strong_20241218.csv",
+    "Data/results_pi_error_MSIVECTOR.csv",
     "Data/results_mw-local_weak_MSIVECTOR.csv",
+    "Data/results_cuda.csv"
 ]
-labels = ['Assignment', 'Pi Calculation', 'Master Worker Partagé']
+labels = ['Assignment', 'Pi Calculation', 'Master Worker Partagé','Pi Calculation with Cuda powered by RTX 4090 Laptop']
 
 # Préparer la figure
 plt.figure(figsize=(12, 8))
 
-colors = ['blue', 'green', 'red']  # Couleurs pour distinguer les différents algorithmes
+colors = ['blue', 'green', 'red', 'orange']  # Couleurs pour distinguer les différents algorithmes
 
 # Boucle pour traiter chaque fichier
 for file, label, color in zip(files, labels, colors):
@@ -33,7 +34,8 @@ for file, label, color in zip(files, labels, colors):
              marker='x', linestyle='-', color=color, label=f'{label} - Moyenne', alpha=0.5)
 
 # Configurer le graphique
-plt.title("Comparaison de l'Erreur entre Trois Algorithmes sur MSI VECTOR")
+plt.title("""Comparaison de l'Erreur entre Quatre Algorithmes sur MSI VECTOR
+Démonstration poussé du calcul de Monte Carlo avec un exemple en orange avec un GPU !""")
 plt.xlabel("Nombre d'itérations (Ntot)")
 plt.ylabel("Erreur")
 plt.xscale('log')  # Échelle logarithmique pour Ntot
@@ -42,7 +44,7 @@ plt.grid(True, which="both", linestyle="--", linewidth=0.5)
 plt.legend()
 
 # Sauvegarder le graphique
-output_file = "doc/Docs/graph/comparison_median_mean_error_by_algorithm2.png"
+output_file = "doc/Docs/graph/comparison_median_mean_error_by_algorithm_with_cuda.png"
 plt.savefig(output_file, dpi=300)
 
 # Afficher le graphique
